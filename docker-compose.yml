@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: remindr-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-remindr}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-remindr_password}
+      POSTGRES_DB: ${POSTGRES_DB:-remindr_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-remindr}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - remindr-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: remindr-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - remindr-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: remindr-api
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-remindr}:${POSTGRES_PASSWORD:-remindr_password}@postgres:5432/${POSTGRES_DB:-remindr_db}?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./prisma:/app/prisma
+    networks:
+      - remindr-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  remindr-network:
+    driver: bridge
+

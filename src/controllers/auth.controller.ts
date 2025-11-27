@@ -5,7 +5,7 @@ import { generateToken, generateRefreshToken, verifyRefreshToken } from '../util
 import { AuthRequest } from '../middleware/auth';
 
 export class AuthController {
-  async register(req: Request, res: Response, next: NextFunction) {
+  async register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, password, firstName, lastName, phoneNumber, dateOfBirth, genderBirth, genderActual, familyId } = req.body;
 
@@ -15,10 +15,11 @@ export class AuthController {
       });
 
       if (existingUser) {
-        return res.status(409).json({
+        res.status(409).json({
           success: false,
           message: 'User with this email already exists',
         });
+        return;
       }
 
       // Hash password
@@ -76,7 +77,7 @@ export class AuthController {
     }
   }
 
-  async login(req: Request, res: Response, next: NextFunction) {
+  async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, password } = req.body;
 
@@ -86,20 +87,22 @@ export class AuthController {
       });
 
       if (!user || !user.isActive) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           message: 'Invalid credentials',
         });
+        return;
       }
 
       // Verify password
       const isValidPassword = await comparePassword(password, user.passwordHash);
 
       if (!isValidPassword) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           message: 'Invalid credentials',
         });
+        return;
       }
 
       // Generate tokens
@@ -138,15 +141,16 @@ export class AuthController {
     }
   }
 
-  async refreshToken(req: Request, res: Response, next: NextFunction) {
+  async refreshToken(req: Request, res: Response, _next: NextFunction): Promise<void> {
     try {
       const { refreshToken } = req.body;
 
       if (!refreshToken) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'Refresh token is required',
         });
+        return;
       }
 
       // Verify refresh token
@@ -165,10 +169,11 @@ export class AuthController {
       });
 
       if (!user || !user.isActive) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           message: 'Invalid refresh token',
         });
+        return;
       }
 
       // Generate new tokens
@@ -194,14 +199,15 @@ export class AuthController {
         },
       });
     } catch (error) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         message: 'Invalid refresh token',
       });
+      return;
     }
   }
 
-  async logout(req: AuthRequest, res: Response, next: NextFunction) {
+  async logout(_req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       // In a production app, you might want to blacklist the token in Redis
       res.json({
@@ -213,13 +219,14 @@ export class AuthController {
     }
   }
 
-  async getMe(req: AuthRequest, res: Response, next: NextFunction) {
+  async getMe(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           message: 'Unauthorized',
         });
+        return;
       }
 
       const user = await prisma.user.findUnique({
@@ -249,7 +256,7 @@ export class AuthController {
     }
   }
 
-  async googleAuth(req: Request, res: Response, next: NextFunction) {
+  async googleAuth(_req: Request, res: Response, _next: NextFunction): Promise<void> {
     // OAuth2 Google implementation
     res.status(501).json({
       success: false,
@@ -257,7 +264,7 @@ export class AuthController {
     });
   }
 
-  async googleCallback(req: Request, res: Response, next: NextFunction) {
+  async googleCallback(_req: Request, res: Response, _next: NextFunction): Promise<void> {
     // OAuth2 Google callback implementation
     res.status(501).json({
       success: false,
@@ -265,7 +272,7 @@ export class AuthController {
     });
   }
 
-  async appleAuth(req: Request, res: Response, next: NextFunction) {
+  async appleAuth(_req: Request, res: Response, _next: NextFunction): Promise<void> {
     // OAuth2 Apple implementation
     res.status(501).json({
       success: false,
@@ -273,7 +280,7 @@ export class AuthController {
     });
   }
 
-  async appleCallback(req: Request, res: Response, next: NextFunction) {
+  async appleCallback(_req: Request, res: Response, _next: NextFunction): Promise<void> {
     // OAuth2 Apple callback implementation
     res.status(501).json({
       success: false,

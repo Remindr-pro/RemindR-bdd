@@ -9,13 +9,13 @@ export interface ApiError extends Error {
 
 export const errorHandler = (
   err: ApiError | ZodError | Prisma.PrismaClientKnownRequestError,
-  req: Request,
+  _req: Request,
   res: Response,
-  next: NextFunction
-) => {
+  _next: NextFunction
+): void => {
   // Zod validation errors
   if (err instanceof ZodError) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       message: 'Validation error',
       errors: err.errors.map((e) => ({
@@ -23,22 +23,25 @@ export const errorHandler = (
         message: e.message,
       })),
     });
+    return;
   }
 
   // Prisma errors
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === 'P2002') {
-      return res.status(409).json({
+      res.status(409).json({
         success: false,
         message: 'Duplicate entry',
         field: err.meta?.target,
       });
+      return;
     }
     if (err.code === 'P2025') {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'Record not found',
       });
+      return;
     }
   }
 

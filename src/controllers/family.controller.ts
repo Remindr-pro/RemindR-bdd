@@ -3,13 +3,14 @@ import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 
 export class FamilyController {
-  async getMyFamily(req: AuthRequest, res: Response, next: NextFunction) {
+  async getMyFamily(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user || !req.user.familyId) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'User is not associated with a family',
         });
+        return;
       }
 
       const family = await prisma.family.findUnique({
@@ -30,10 +31,11 @@ export class FamilyController {
       });
 
       if (!family) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'Family not found',
         });
+        return;
       }
 
       res.json({
@@ -45,7 +47,7 @@ export class FamilyController {
     }
   }
 
-  async getById(req: Request, res: Response, next: NextFunction) {
+  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
 
@@ -67,10 +69,11 @@ export class FamilyController {
       });
 
       if (!family) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'Family not found',
         });
+        return;
       }
 
       res.json({
@@ -82,7 +85,7 @@ export class FamilyController {
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction) {
+  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
       const { familyName, primaryContactEmail, subscriptionStatus } = req.body;

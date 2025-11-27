@@ -3,13 +3,14 @@ import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 
 export class RecommendationController {
-  async getAll(req: AuthRequest, res: Response, next: NextFunction) {
+  async getAll(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           message: 'Unauthorized',
         });
+        return;
       }
 
       const recommendations = await prisma.recommendation.findMany({
@@ -40,7 +41,7 @@ export class RecommendationController {
     }
   }
 
-  async getById(req: Request, res: Response, next: NextFunction) {
+  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
 
@@ -65,10 +66,11 @@ export class RecommendationController {
       });
 
       if (!recommendation) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'Recommendation not found',
         });
+        return;
       }
 
       res.json({
@@ -80,7 +82,7 @@ export class RecommendationController {
     }
   }
 
-  async dismiss(req: Request, res: Response, next: NextFunction) {
+  async dismiss(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
 
@@ -102,7 +104,7 @@ export class RecommendationController {
     }
   }
 
-  async recordClick(req: Request, res: Response, next: NextFunction) {
+  async recordClick(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
 

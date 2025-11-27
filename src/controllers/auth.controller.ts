@@ -9,7 +9,6 @@ export class AuthController {
     try {
       const { email, password, firstName, lastName, phoneNumber, dateOfBirth, genderBirth, genderActual, familyId } = req.body;
 
-      // Check if user already exists
       const existingUser = await prisma.user.findUnique({
         where: { email },
       });
@@ -22,10 +21,8 @@ export class AuthController {
         return;
       }
 
-      // Hash password
       const passwordHash = await hashPassword(password);
 
-      // Create user
       const user = await prisma.user.create({
         data: {
           email,
@@ -48,7 +45,6 @@ export class AuthController {
         },
       });
 
-      // Generate tokens
       const token = generateToken({
         id: user.id,
         email: user.email,
@@ -81,7 +77,6 @@ export class AuthController {
     try {
       const { email, password } = req.body;
 
-      // Find user
       const user = await prisma.user.findUnique({
         where: { email },
       });
@@ -94,7 +89,6 @@ export class AuthController {
         return;
       }
 
-      // Verify password
       const isValidPassword = await comparePassword(password, user.passwordHash);
 
       if (!isValidPassword) {
@@ -105,7 +99,6 @@ export class AuthController {
         return;
       }
 
-      // Generate tokens
       const token = generateToken({
         id: user.id,
         email: user.email,
@@ -153,10 +146,8 @@ export class AuthController {
         return;
       }
 
-      // Verify refresh token
       const decoded = verifyRefreshToken(refreshToken);
 
-      // Get user
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },
         select: {
@@ -176,7 +167,6 @@ export class AuthController {
         return;
       }
 
-      // Generate new tokens
       const newToken = generateToken({
         id: user.id,
         email: user.email,
@@ -209,7 +199,6 @@ export class AuthController {
 
   async logout(_req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      // In a production app, you might want to blacklist the token in Redis
       res.json({
         success: true,
         message: 'Logout successful',
@@ -257,7 +246,6 @@ export class AuthController {
   }
 
   async googleAuth(_req: Request, res: Response, _next: NextFunction): Promise<void> {
-    // OAuth2 Google implementation
     res.status(501).json({
       success: false,
       message: 'Google OAuth2 not implemented yet',
@@ -265,7 +253,6 @@ export class AuthController {
   }
 
   async googleCallback(_req: Request, res: Response, _next: NextFunction): Promise<void> {
-    // OAuth2 Google callback implementation
     res.status(501).json({
       success: false,
       message: 'Google OAuth2 callback not implemented yet',
@@ -273,7 +260,6 @@ export class AuthController {
   }
 
   async appleAuth(_req: Request, res: Response, _next: NextFunction): Promise<void> {
-    // OAuth2 Apple implementation
     res.status(501).json({
       success: false,
       message: 'Apple OAuth2 not implemented yet',
@@ -281,7 +267,6 @@ export class AuthController {
   }
 
   async appleCallback(_req: Request, res: Response, _next: NextFunction): Promise<void> {
-    // OAuth2 Apple callback implementation
     res.status(501).json({
       success: false,
       message: 'Apple OAuth2 callback not implemented yet',

@@ -3,13 +3,14 @@ import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 
 export class HealthProfileController {
-  async getMyProfile(req: AuthRequest, res: Response, next: NextFunction) {
+  async getMyProfile(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           message: 'Unauthorized',
         });
+        return;
       }
 
       const profile = await prisma.healthProfile.findUnique({
@@ -27,10 +28,11 @@ export class HealthProfileController {
       });
 
       if (!profile) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'Health profile not found',
         });
+        return;
       }
 
       res.json({
@@ -42,7 +44,7 @@ export class HealthProfileController {
     }
   }
 
-  async getByUserId(req: Request, res: Response, next: NextFunction) {
+  async getByUserId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { userId } = req.params;
 
@@ -61,10 +63,11 @@ export class HealthProfileController {
       });
 
       if (!profile) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'Health profile not found',
         });
+        return;
       }
 
       res.json({
@@ -76,7 +79,7 @@ export class HealthProfileController {
     }
   }
 
-  async create(req: Request, res: Response, next: NextFunction) {
+  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { userId, bloodType, height, weight, allergies, chronicConditions, medications, preferences } = req.body;
 
@@ -103,7 +106,7 @@ export class HealthProfileController {
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction) {
+  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
       const { bloodType, height, weight, allergies, chronicConditions, medications, preferences } = req.body;

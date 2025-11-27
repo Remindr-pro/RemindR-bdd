@@ -3,7 +3,7 @@ import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 
 export class UserController {
-  async getAll(req: AuthRequest, res: Response, next: NextFunction) {
+  async getAll(_req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const users = await prisma.user.findMany({
         select: {
@@ -27,7 +27,7 @@ export class UserController {
     }
   }
 
-  async getById(req: Request, res: Response, next: NextFunction) {
+  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
 
@@ -50,10 +50,11 @@ export class UserController {
       });
 
       if (!user) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'User not found',
         });
+        return;
       }
 
       res.json({
@@ -65,7 +66,7 @@ export class UserController {
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction) {
+  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
       const { firstName, lastName, phoneNumber, genderActual, profilePictureUrl } = req.body;
@@ -100,7 +101,7 @@ export class UserController {
     }
   }
 
-  async delete(req: Request, res: Response, next: NextFunction) {
+  async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
 

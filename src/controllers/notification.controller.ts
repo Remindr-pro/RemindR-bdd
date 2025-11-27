@@ -3,13 +3,14 @@ import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 
 export class NotificationController {
-  async getAll(req: AuthRequest, res: Response, next: NextFunction) {
+  async getAll(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           message: 'Unauthorized',
         });
+        return;
       }
 
       const { limit = 50, offset = 0 } = req.query;
@@ -38,7 +39,7 @@ export class NotificationController {
     }
   }
 
-  async getById(req: Request, res: Response, next: NextFunction) {
+  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
 
@@ -58,10 +59,11 @@ export class NotificationController {
       });
 
       if (!notification) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'Notification not found',
         });
+        return;
       }
 
       res.json({
@@ -73,7 +75,7 @@ export class NotificationController {
     }
   }
 
-  async markAsRead(req: Request, res: Response, next: NextFunction) {
+  async markAsRead(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
 

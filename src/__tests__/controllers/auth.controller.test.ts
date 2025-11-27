@@ -3,7 +3,6 @@ import { AuthController } from '../../controllers/auth.controller';
 import prisma from '../../config/database';
 import { hashPassword } from '../../utils/bcrypt';
 
-// Mock Prisma
 jest.mock('../../config/database', () => ({
   __esModule: true,
   default: {
@@ -14,7 +13,6 @@ jest.mock('../../config/database', () => ({
   },
 }));
 
-// Mock bcrypt
 jest.mock('../../utils/bcrypt', () => ({
   hashPassword: jest.fn(),
   comparePassword: jest.fn(),

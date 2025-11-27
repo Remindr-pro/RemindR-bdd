@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/database';
 
 export class ArticleController {
-  async getAll(req: Request, res: Response, next: NextFunction) {
+  async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { categoryId, published } = req.query;
 
@@ -27,7 +27,7 @@ export class ArticleController {
     }
   }
 
-  async getById(req: Request, res: Response, next: NextFunction) {
+  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
 
@@ -39,10 +39,11 @@ export class ArticleController {
       });
 
       if (!article) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'Article not found',
         });
+        return;
       }
 
       res.json({
@@ -78,7 +79,7 @@ export class ArticleController {
     }
   }
 
-  async create(req: Request, res: Response, next: NextFunction) {
+  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { categoryId, title, content, excerpt, coverImageUrl, readingTimeMinutes, author, targetAudience, seoKeywords } = req.body;
 
@@ -109,7 +110,7 @@ export class ArticleController {
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction) {
+  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
       const { categoryId, title, content, excerpt, coverImageUrl, readingTimeMinutes, author, targetAudience, seoKeywords, isPublished } = req.body;
@@ -147,7 +148,7 @@ export class ArticleController {
     }
   }
 
-  async delete(req: Request, res: Response, next: NextFunction) {
+  async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
 
@@ -164,7 +165,7 @@ export class ArticleController {
     }
   }
 
-  async publish(req: Request, res: Response, next: NextFunction) {
+  async publish(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
 

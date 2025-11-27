@@ -2,7 +2,6 @@ import { notificationQueue } from './queue.service';
 import { notificationService } from './notification.service';
 import { NotificationData } from '../types/notification.types';
 
-// Process notification jobs
 notificationQueue.process('send-notification', async (job) => {
   const data: NotificationData = job.data;
 

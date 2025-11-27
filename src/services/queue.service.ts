@@ -1,7 +1,6 @@
 import Queue from 'bull';
 import redis from '../config/redis';
 
-// Notification queue
 export const notificationQueue = new Queue('notifications', {
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
@@ -10,7 +9,6 @@ export const notificationQueue = new Queue('notifications', {
   },
 });
 
-// Reminder queue for scheduled reminders
 export const reminderQueue = new Queue('reminders', {
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
@@ -19,7 +17,6 @@ export const reminderQueue = new Queue('reminders', {
   },
 });
 
-// Cleanup on shutdown
 process.on('SIGTERM', async () => {
   await notificationQueue.close();
   await reminderQueue.close();

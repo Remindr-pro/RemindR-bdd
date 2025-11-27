@@ -7,44 +7,35 @@ import prisma from '../config/database';
 import { notificationQueue } from './queue.service';
 import { NotificationData } from '../types/notification.types';
 
-// Initialize Firebase Admin
 if (process.env.FCM_SERVICE_ACCOUNT_PATH) {
   try {
-    // Resolve the path relative to the project root
     const serviceAccountPath = path.resolve(process.cwd(), process.env.FCM_SERVICE_ACCOUNT_PATH);
     
-    // Check if file exists
     if (!fs.existsSync(serviceAccountPath)) {
       throw new Error(`File not found: ${serviceAccountPath}`);
     }
     
-    // Read and parse the JSON file
     const serviceAccountJson = fs.readFileSync(serviceAccountPath, 'utf8');
     const serviceAccount = JSON.parse(serviceAccountJson);
     
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
-    console.log('✅ Firebase Admin initialized with Service Account');
   } catch (error) {
-    console.error('❌ Error loading Firebase Service Account:', error);
+    console.error('Error loading Firebase Service Account:', error);
     console.error(`Please check that FCM_SERVICE_ACCOUNT_PATH (${process.env.FCM_SERVICE_ACCOUNT_PATH}) points to a valid JSON file`);
   }
 } else if (process.env.FCM_SERVER_KEY && process.env.FCM_PROJECT_ID) {
-  console.warn('⚠️  Using FCM_SERVER_KEY: Admin SDK requires Service Account for full functionality');
+  console.warn('Using FCM_SERVER_KEY: Admin SDK requires Service Account for full functionality');
   admin.initializeApp({
     projectId: process.env.FCM_PROJECT_ID,
   });
-} else {
-  console.warn('⚠️  Firebase Cloud Messaging not configured. Set FCM_SERVICE_ACCOUNT_PATH or FCM_SERVER_KEY in .env');
 }
 
-// Initialize SendGrid
 if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
-// Initialize Twilio
 const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN
   ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
   : null;
@@ -146,7 +137,6 @@ export class NotificationService {
   }
 
   async sendNotification(data: NotificationData): Promise<boolean> {
-    // Queue the notification for processing
     await notificationQueue.add('send-notification', data, {
       attempts: 3,
       backoff: {

@@ -13,7 +13,6 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ): void => {
-  // Zod validation errors
   if (err instanceof ZodError) {
     res.status(400).json({
       success: false,
@@ -26,7 +25,6 @@ export const errorHandler = (
     return;
   }
 
-  // Prisma errors
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === 'P2002') {
       res.status(409).json({
@@ -45,7 +43,6 @@ export const errorHandler = (
     }
   }
 
-  // Custom API errors
   const statusCode = (err as ApiError).statusCode || 500;
   const message = err.message || 'Internal server error';
 

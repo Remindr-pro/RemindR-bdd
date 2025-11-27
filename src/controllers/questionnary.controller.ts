@@ -3,13 +3,14 @@ import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 
 export class QuestionnaryController {
-  async getMyQuestionnary(req: AuthRequest, res: Response, next: NextFunction) {
+  async getMyQuestionnary(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           message: 'Unauthorized',
         });
+        return;
       }
 
       const questionnary = await prisma.questionnary.findUnique({
@@ -27,10 +28,11 @@ export class QuestionnaryController {
       });
 
       if (!questionnary) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'Questionnary not found',
         });
+        return;
       }
 
       res.json({
@@ -42,7 +44,7 @@ export class QuestionnaryController {
     }
   }
 
-  async create(req: Request, res: Response, next: NextFunction) {
+  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const {
         userId,
@@ -98,7 +100,7 @@ export class QuestionnaryController {
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction) {
+  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
       const {

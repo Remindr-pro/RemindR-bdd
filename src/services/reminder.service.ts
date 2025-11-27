@@ -1,13 +1,11 @@
 import prisma from '../config/database';
-import { reminderQueue } from './queue.service';
 import { notificationService } from './notification.service';
 
 export class ReminderService {
   async processScheduledReminders() {
     const now = new Date();
-    const currentTime = now.toTimeString().slice(0, 8); // HH:MM:SS
+    const currentTime = now.toTimeString().slice(0, 8);
 
-    // Find active reminders that should be triggered
     const reminders = await prisma.reminder.findMany({
       where: {
         isActive: true,
@@ -27,7 +25,6 @@ export class ReminderService {
     for (const reminder of reminders) {
       const scheduledTime = reminder.scheduledTime.toTimeString().slice(0, 8);
 
-      // Check if reminder should be triggered now
       if (this.shouldTrigger(reminder, currentTime, scheduledTime)) {
         await this.triggerReminder(reminder);
       }
@@ -35,12 +32,10 @@ export class ReminderService {
   }
 
   private shouldTrigger(reminder: any, currentTime: string, scheduledTime: string): boolean {
-    // Simple time matching (can be enhanced with recurrence logic)
     if (currentTime !== scheduledTime) {
       return false;
     }
 
-    // Check if already triggered today
     if (reminder.lastTriggeredAt) {
       const lastTriggered = new Date(reminder.lastTriggeredAt);
       const today = new Date();
@@ -58,14 +53,12 @@ export class ReminderService {
 
   private async triggerReminder(reminder: any) {
     try {
-      // Get user's notification preferences
       const questionnary = await prisma.questionnary.findUnique({
         where: { userId: reminder.userId },
       });
 
       const enabledChannels = questionnary?.enabledNotificationChannels || ['push'];
 
-      // Send notifications through enabled channels
       for (const channel of enabledChannels) {
         if (channel === 'push') {
           await notificationService.sendNotification({
@@ -96,7 +89,6 @@ export class ReminderService {
         }
       }
 
-      // Update last triggered time
       await prisma.reminder.update({
         where: { id: reminder.id },
         data: { lastTriggeredAt: new Date() },

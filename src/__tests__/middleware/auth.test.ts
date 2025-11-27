@@ -3,7 +3,6 @@ import { authenticate, authorize, AuthRequest } from '../../middleware/auth';
 import { generateToken } from '../../utils/jwt';
 import prisma from '../../config/database';
 
-// Mock Prisma
 jest.mock('../../config/database', () => ({
   __esModule: true,
   default: {

@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // Create insurance company
   const insuranceCompany = await prisma.insuranceCompany.create({
     data: {
       name: 'Health Insurance Co.',
@@ -16,7 +15,6 @@ async function main() {
     },
   });
 
-  // Create family
   const family = await prisma.family.create({
     data: {
       insuranceCompanyId: insuranceCompany.id,
@@ -26,7 +24,6 @@ async function main() {
     },
   });
 
-  // Create admin user
   const adminPassword = await hashPassword('admin123');
   const adminUser = await prisma.user.create({
     data: {
@@ -40,7 +37,6 @@ async function main() {
     },
   });
 
-  // Create regular user
   const userPassword = await hashPassword('user123');
   const user = await prisma.user.create({
     data: {
@@ -57,7 +53,6 @@ async function main() {
     },
   });
 
-  // Create health profile
   await prisma.healthProfile.create({
     data: {
       userId: user.id,
@@ -74,7 +69,6 @@ async function main() {
     },
   });
 
-  // Create reminder types
   const medicationType = await prisma.reminderType.create({
     data: {
       name: 'Medication',
@@ -91,7 +85,6 @@ async function main() {
     },
   });
 
-  // Create reminder
   await prisma.reminder.create({
     data: {
       userId: user.id,
@@ -107,7 +100,6 @@ async function main() {
     },
   });
 
-  // Create article category
   const healthCategory = await prisma.articleCategory.create({
     data: {
       name: 'General Health',
@@ -117,8 +109,7 @@ async function main() {
       tags: ['health', 'wellness'],
     },
   });
-
-  // Create article
+  
   await prisma.article.create({
     data: {
       categoryId: healthCategory.id,
@@ -137,7 +128,6 @@ async function main() {
     },
   });
 
-  // Create partner
   const partner = await prisma.partner.create({
     data: {
       name: 'Health Clinic',
@@ -149,7 +139,6 @@ async function main() {
     },
   });
 
-  // Create questionnary
   await prisma.questionnary.create({
     data: {
       userId: user.id,

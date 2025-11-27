@@ -37,7 +37,6 @@ export const authenticate = async (
       familyId?: string | null;
     };
 
-    // Verify user still exists and is active
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
       select: {

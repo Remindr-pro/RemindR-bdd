@@ -7,6 +7,7 @@ describe('Error Handler Middleware', () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
   let nextFunction: NextFunction;
+  let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
     mockRequest = {};
@@ -16,7 +17,12 @@ describe('Error Handler Middleware', () => {
     };
     nextFunction = jest.fn();
     process.env.NODE_ENV = 'test';
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   it('should handle Zod validation errors', () => {

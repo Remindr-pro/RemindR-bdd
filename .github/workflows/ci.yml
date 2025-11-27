@@ -112,47 +112,45 @@ jobs:
           echo "Token length: ${#DOCKER_HUB_TOKEN}"
           echo "Token starts with: ${DOCKER_HUB_TOKEN:0:10}..."
           
-          # Nettoyer les espaces et retours à la ligne
-          DOCKER_HUB_USERNAME_CLEAN=$(echo "$DOCKER_HUB_USERNAME" | tr -d '[:space:]')
-          DOCKER_HUB_TOKEN_CLEAN=$(echo "$DOCKER_HUB_TOKEN" | tr -d '[:space:]')
-          
-          if [ "$DOCKER_HUB_USERNAME" != "$DOCKER_HUB_USERNAME_CLEAN" ]; then
-            echo "::warning::Username contains whitespace, cleaning it"
+          # Vérifier le format du token
+          if [[ ! "$DOCKER_HUB_TOKEN" =~ ^dckr_pat_ ]]; then
+            echo "::error::Token doesn't start with 'dckr_pat_'. Make sure you're using an Access Token, not your password."
+            echo "Create a new token at: https://hub.docker.com/settings/security"
+            exit 1
           fi
-          if [ "$DOCKER_HUB_TOKEN" != "$DOCKER_HUB_TOKEN_CLEAN" ]; then
-            echo "::warning::Token contains whitespace, cleaning it"
+          
+          # Vérifier qu'il n'y a pas d'espaces
+          if [[ "$DOCKER_HUB_USERNAME" =~ [[:space:]] ]]; then
+            echo "::warning::Username contains whitespace. This may cause issues."
+          fi
+          if [[ "$DOCKER_HUB_TOKEN" =~ [[:space:]] ]]; then
+            echo "::warning::Token contains whitespace. This may cause issues."
           fi
 
-      - name: Test Docker Hub login
+      - name: Login to Docker Hub
         env:
           DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
           DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
         run: |
-          # Nettoyer les espaces
-          USERNAME=$(echo "$DOCKER_HUB_USERNAME" | tr -d '[:space:]')
-          TOKEN=$(echo "$DOCKER_HUB_TOKEN" | tr -d '[:space:]')
+          # Nettoyer les espaces et retours à la ligne
+          USERNAME=$(echo -n "$DOCKER_HUB_USERNAME" | tr -d '[:space:]')
+          TOKEN=$(echo -n "$DOCKER_HUB_TOKEN" | tr -d '[:space:]')
           
-          echo "Testing Docker Hub login..."
-          echo "$TOKEN" | docker login docker.io -u "$USERNAME" --password-stdin
+          echo "Logging in to Docker Hub..."
+          echo "$TOKEN" | docker login -u "$USERNAME" --password-stdin
+          
+          # Vérifier que le login a réussi
           if [ $? -eq 0 ]; then
-            echo "✅ Docker Hub login successful"
-            docker logout docker.io
+            echo "✅ Successfully logged in to Docker Hub"
           else
-            echo "::error::Docker Hub login failed"
+            echo "::error::Failed to login to Docker Hub"
             echo "Please verify:"
-            echo "1. Username is correct (not email): $USERNAME"
+            echo "1. Username: $USERNAME"
             echo "2. Token is valid and has Read & Write permissions"
             echo "3. Token starts with 'dckr_pat_'"
+            echo "4. No extra spaces or characters in secrets"
             exit 1
           fi
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
-          registry: docker.io
-          logout: false
 
       - name: Extract metadata
         id: meta

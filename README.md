@@ -27,7 +27,7 @@ API Backend pour l'application de santé RemindR, construite avec Node.js, Expre
 ### Infrastructure
 - **Docker** pour la conteneurisation
 - **Docker Compose** pour l'orchestration
-- **GitHub Actions** pour le CI/CD
+- **GitHub Actions** pour le CI/CD avec déploiement automatique
 - **Grafana** pour le monitoring (à configurer)
 
 ## 📋 Prérequis
@@ -311,9 +311,12 @@ Le fichier `docker-compose.yml` configure :
 ## 🔄 CI/CD
 
 Le pipeline GitHub Actions (`/.github/workflows/ci.yml`) :
-- Lance les tests
-- Vérifie le linting
-- Build l'image Docker (sur push vers main)
+- ✅ Lance les tests automatiquement
+- ✅ Vérifie le linting
+- ✅ Build et publie l'image Docker sur Docker Hub (sur push vers main)
+- ✅ Déploiement automatique configuré
+
+> 📖 **Guide de déploiement** : Consultez [DEPLOYMENT.md](./DEPLOYMENT.md) pour configurer le déploiement automatique.
 
 ## 📦 Dépendances Principales
 

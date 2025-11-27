@@ -2,12 +2,14 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { jwtConfig } from '../config/jwt';
 import prisma from '../config/database';
+import { UserType } from '@prisma/client';
 
 export interface AuthRequest extends Request {
   user?: {
     id: string;
     email: string;
     role: string;
+    userType: UserType;
     familyId?: string | null;
   };
 }
@@ -34,6 +36,7 @@ export const authenticate = async (
       id: string;
       email: string;
       role: string;
+      userType: UserType;
       familyId?: string | null;
     };
 
@@ -43,6 +46,7 @@ export const authenticate = async (
         id: true,
         email: true,
         role: true,
+        userType: true,
         familyId: true,
         isActive: true,
       },
@@ -60,6 +64,7 @@ export const authenticate = async (
       id: user.id,
       email: user.email,
       role: user.role,
+      userType: user.userType,
       familyId: user.familyId,
     };
 

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthController } from '../../controllers/auth.controller';
 import prisma from '../../config/database';
 import { hashPassword } from '../../utils/bcrypt';
+import { UserType } from '@prisma/client';
 
 jest.mock('../../config/database', () => ({
   __esModule: true,
@@ -57,6 +58,7 @@ describe('AuthController', () => {
         firstName: mockUserData.firstName,
         lastName: mockUserData.lastName,
         role: 'family_member',
+        userType: UserType.INDIVIDUAL,
         familyId: null,
       });
 
@@ -119,6 +121,7 @@ describe('AuthController', () => {
         firstName: 'John',
         lastName: 'Doe',
         role: 'family_member',
+        userType: UserType.INDIVIDUAL,
         familyId: null,
         isActive: true,
       };

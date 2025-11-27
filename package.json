@@ -4,7 +4,9 @@
   "description": "API Backend for RemindR health application",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "node scripts/start-services.js && tsx watch src/server.ts",
+    "dev:no-redis": "node scripts/start-services.js && tsx watch src/server.ts",
+    "dev:no-services": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
@@ -13,7 +15,21 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "lint": "eslint src --ext .ts",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "services:start": "docker-compose up postgres redis -d",
+    "services:stop": "docker-compose stop postgres redis",
+    "services:logs": "docker-compose logs -f",
+    "redis:start": "docker-compose up redis -d",
+    "redis:stop": "docker-compose stop redis",
+    "redis:logs": "docker-compose logs -f redis",
+    "postgres:start": "docker-compose up postgres -d",
+    "postgres:stop": "docker-compose stop postgres",
+    "postgres:logs": "docker-compose logs -f postgres",
+    "postgres:reset": "node scripts/reset-db.js",
+    "db:check": "node scripts/check-db.js",
+    "db:fix-password": "node scripts/fix-db-password.js",
+    "db:setup": "npm run postgres:start && timeout /t 5 /nobreak >nul && npm run prisma:migrate",
+    "kill:port": "node scripts/kill-port.js"
   },
   "keywords": [
     "health",

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ReminderController } from '../../controllers/reminder.controller';
 import prisma from '../../config/database';
 import { AuthRequest } from '../../middleware/auth';
+import { UserType } from '@prisma/client';
 
 jest.mock('../../config/database', () => ({
   __esModule: true,
@@ -29,6 +30,7 @@ describe('ReminderController', () => {
         id: '123',
         email: 'test@example.com',
         role: 'family_member',
+        userType: UserType.INDIVIDUAL,
         familyId: null,
       },
       body: {},

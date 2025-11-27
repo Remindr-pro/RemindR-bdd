@@ -1,10 +1,12 @@
 import { generateToken, generateRefreshToken, verifyToken, verifyRefreshToken } from '../../utils/jwt';
+import { UserType } from '@prisma/client';
 
 describe('JWT Utils', () => {
   const mockPayload = {
     id: '123e4567-e89b-12d3-a456-426614174000',
     email: 'test@example.com',
     role: 'family_member',
+    userType: UserType.INDIVIDUAL,
     familyId: null,
   };
 

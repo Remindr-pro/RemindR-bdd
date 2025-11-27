@@ -3,11 +3,12 @@ import prisma from '../config/database';
 import { hashPassword, comparePassword } from '../utils/bcrypt';
 import { generateToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { AuthRequest } from '../middleware/auth';
+import { UserType } from '@prisma/client';
 
 export class AuthController {
   async register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { email, password, firstName, lastName, phoneNumber, dateOfBirth, genderBirth, genderActual, familyId } = req.body;
+      const { email, password, firstName, lastName, phoneNumber, dateOfBirth, genderBirth, genderActual, familyId, userType } = req.body;
 
       const existingUser = await prisma.user.findUnique({
         where: { email },
@@ -34,6 +35,7 @@ export class AuthController {
           genderBirth,
           genderActual,
           familyId: familyId || null,
+          userType: userType || UserType.INDIVIDUAL,
         },
         select: {
           id: true,
@@ -41,6 +43,7 @@ export class AuthController {
           firstName: true,
           lastName: true,
           role: true,
+          userType: true,
           familyId: true,
         },
       });
@@ -49,6 +52,7 @@ export class AuthController {
         id: user.id,
         email: user.email,
         role: user.role,
+        userType: user.userType,
         familyId: user.familyId,
       });
 
@@ -56,6 +60,7 @@ export class AuthController {
         id: user.id,
         email: user.email,
         role: user.role,
+        userType: user.userType,
         familyId: user.familyId,
       });
 
@@ -103,6 +108,7 @@ export class AuthController {
         id: user.id,
         email: user.email,
         role: user.role,
+        userType: user.userType,
         familyId: user.familyId,
       });
 
@@ -110,6 +116,7 @@ export class AuthController {
         id: user.id,
         email: user.email,
         role: user.role,
+        userType: user.userType,
         familyId: user.familyId,
       });
 
@@ -123,6 +130,7 @@ export class AuthController {
             firstName: user.firstName,
             lastName: user.lastName,
             role: user.role,
+            userType: user.userType,
             familyId: user.familyId,
           },
           token,
@@ -154,6 +162,7 @@ export class AuthController {
           id: true,
           email: true,
           role: true,
+          userType: true,
           familyId: true,
           isActive: true,
         },
@@ -171,6 +180,7 @@ export class AuthController {
         id: user.id,
         email: user.email,
         role: user.role,
+        userType: user.userType,
         familyId: user.familyId,
       });
 
@@ -178,6 +188,7 @@ export class AuthController {
         id: user.id,
         email: user.email,
         role: user.role,
+        userType: user.userType,
         familyId: user.familyId,
       });
 
@@ -230,6 +241,7 @@ export class AuthController {
           genderBirth: true,
           genderActual: true,
           role: true,
+          userType: true,
           profilePictureUrl: true,
           familyId: true,
           createdAt: true,

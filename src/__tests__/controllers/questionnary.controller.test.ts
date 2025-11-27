@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { QuestionnaryController } from '../../controllers/questionnary.controller';
 import prisma from '../../config/database';
 import { AuthRequest } from '../../middleware/auth';
+import { UserType } from '@prisma/client';
 
 jest.mock('../../config/database', () => ({
   __esModule: true,
@@ -27,6 +28,7 @@ describe('QuestionnaryController', () => {
         id: '123',
         email: 'test@example.com',
         role: 'family_member',
+        userType: UserType.INDIVIDUAL,
         familyId: null,
       },
       params: {},

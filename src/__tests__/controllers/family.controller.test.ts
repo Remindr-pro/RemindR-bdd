@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { FamilyController } from '../../controllers/family.controller';
 import prisma from '../../config/database';
 import { AuthRequest } from '../../middleware/auth';
+import { UserType } from '@prisma/client';
 
 jest.mock('../../config/database', () => ({
   __esModule: true,
@@ -26,6 +27,7 @@ describe('FamilyController', () => {
         id: '123',
         email: 'test@example.com',
         role: 'family_member',
+        userType: UserType.INDIVIDUAL,
         familyId: 'family-123',
       },
       params: {},

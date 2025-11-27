@@ -44,10 +44,17 @@ export class QuestionnaryController {
     }
   }
 
-  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async create(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: 'Unauthorized',
+        });
+        return;
+      }
+
       const {
-        userId,
         step,
         nbPersonsFollowed,
         hasGeneralPractitioner,
@@ -64,7 +71,7 @@ export class QuestionnaryController {
 
       const questionnary = await prisma.questionnary.create({
         data: {
-          userId,
+          userId: req.user.id,
           step: step || 1,
           nbPersonsFollowed: nbPersonsFollowed || 1,
           hasGeneralPractitioner,

@@ -13,6 +13,7 @@ export class UserController {
           lastName: true,
           phoneNumber: true,
           role: true,
+          userType: true,
           isActive: true,
           createdAt: true,
         },
@@ -43,6 +44,7 @@ export class UserController {
           genderBirth: true,
           genderActual: true,
           role: true,
+          userType: true,
           profilePictureUrl: true,
           isActive: true,
           createdAt: true,
@@ -69,17 +71,19 @@ export class UserController {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const { firstName, lastName, phoneNumber, genderActual, profilePictureUrl } = req.body;
+      const { firstName, lastName, phoneNumber, genderActual, profilePictureUrl, userType } = req.body;
+
+      const updateData: any = {};
+      if (firstName !== undefined) updateData.firstName = firstName;
+      if (lastName !== undefined) updateData.lastName = lastName;
+      if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
+      if (genderActual !== undefined) updateData.genderActual = genderActual;
+      if (profilePictureUrl !== undefined) updateData.profilePictureUrl = profilePictureUrl;
+      if (userType !== undefined) updateData.userType = userType;
 
       const user = await prisma.user.update({
         where: { id },
-        data: {
-          firstName,
-          lastName,
-          phoneNumber,
-          genderActual,
-          profilePictureUrl,
-        },
+        data: updateData,
         select: {
           id: true,
           email: true,

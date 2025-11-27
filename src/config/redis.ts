@@ -12,19 +12,46 @@ const redis = process.env.NODE_ENV === 'test'
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379'),
       password: process.env.REDIS_PASSWORD || undefined,
+      lazyConnect: true,
+      enableOfflineQueue: false,
       retryStrategy: (times) => {
+        if (process.env.NODE_ENV === 'development' && times > 3) {
+          return null;
+        }
         const delay = Math.min(times * 50, 2000);
         return delay;
       },
+      maxRetriesPerRequest: process.env.NODE_ENV === 'development' ? 1 : 3,
+      connectTimeout: 5000,
+      enableReadyCheck: false,
     });
 
 if (process.env.NODE_ENV !== 'test') {
+  let redisErrorLogged = false;
+
   redis.on('connect', () => {
-    console.log('Redis connected');
+    console.log('✅ Redis connected');
+    redisErrorLogged = false;
   });
 
   redis.on('error', (err) => {
-    console.error('Redis connection error:', err);
+    if (process.env.NODE_ENV === 'development') {
+      if (!redisErrorLogged && (err.code === 'ECONNREFUSED' || err.message?.includes('ECONNREFUSED'))) {
+        console.warn('⚠️  Redis not available - queues will not work. Start Redis with: npm run redis:start');
+        redisErrorLogged = true;
+      }
+    } else {
+      if (!redisErrorLogged) {
+        console.error('Redis connection error:', err);
+        redisErrorLogged = true;
+      }
+    }
+  });
+
+  redis.on('ready', () => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ Redis ready');
+    }
   });
 }
 

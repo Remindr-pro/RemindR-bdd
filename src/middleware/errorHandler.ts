@@ -43,6 +43,23 @@ export const errorHandler = (
     }
   }
 
+  if (err instanceof Prisma.PrismaClientInitializationError) {
+    if (err.message.includes("Can't reach database server")) {
+      res.status(503).json({
+        success: false,
+        message: 'Database server is not available. Please start PostgreSQL with: npm run postgres:start',
+      });
+      return;
+    }
+    if (err.message.includes('Authentication failed')) {
+      res.status(503).json({
+        success: false,
+        message: 'Database authentication failed. Please check your DATABASE_URL in .env file. It should match: postgresql://remindr:remindr_password@localhost:5432/remindr_db?schema=public',
+      });
+      return;
+    }
+  }
+
   const statusCode = (err as ApiError).statusCode || 500;
   const message = err.message || 'Internal server error';
 

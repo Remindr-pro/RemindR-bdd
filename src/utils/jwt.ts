@@ -1,10 +1,12 @@
 import jwt from 'jsonwebtoken';
 import { jwtConfig } from '../config/jwt';
+import { UserType } from '@prisma/client';
 
 export interface TokenPayload {
   id: string;
   email: string;
   role: string;
+  userType: UserType;
   familyId?: string | null;
 }
 

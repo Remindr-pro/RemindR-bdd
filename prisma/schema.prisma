@@ -37,6 +37,12 @@ model Family {
   @@map("families")
 }
 
+enum UserType {
+  INDIVIDUAL
+  PROFESSIONAL
+  ADMIN
+}
+
 model User {
   id                String   @id @default(uuid()) @db.Uuid
   familyId          String?  @map("family_id") @db.Uuid
@@ -49,6 +55,7 @@ model User {
   genderBirth       String?  @map("gender_birth") @db.VarChar
   genderActual      String?  @map("gender_actual") @db.VarChar
   role              String   @default("family_member") @db.VarChar
+  userType          UserType @default(INDIVIDUAL) @map("user_type")
   profilePictureUrl String?  @map("profile_picture_url") @db.Text
   isActive          Boolean  @default(true) @map("is_active")
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(6)

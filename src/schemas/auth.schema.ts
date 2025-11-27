@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { UserType } from '@prisma/client';
 
 export const registerSchema = z.object({
   body: z.object({
@@ -11,6 +12,7 @@ export const registerSchema = z.object({
     genderBirth: z.string().optional(),
     genderActual: z.string().optional(),
     familyId: z.string().uuid().optional(),
+    userType: z.nativeEnum(UserType).optional().default(UserType.INDIVIDUAL),
   }),
 });
 

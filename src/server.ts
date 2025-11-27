@@ -9,6 +9,15 @@ import routes from './routes';
 import { startReminderScheduler } from './jobs/reminderScheduler';
 import './services/queue.processors';
 
+process.on('unhandledRejection', (reason, promise) => {
+  if (reason && typeof reason === 'object' && 'code' in reason) {
+    if (reason.code === 'ECONNREFUSED' && process.env.NODE_ENV === 'development') {
+      return;
+    }
+  }
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 dotenv.config();
 
 const app = express();
@@ -49,13 +58,27 @@ app.use((req, res) => {
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`API available at http://localhost:${PORT}/api/${API_VERSION}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
   
   if (process.env.NODE_ENV !== 'test') {
     startReminderScheduler();
+  }
+});
+
+server.on('error', (error: NodeJS.ErrnoException) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use.`);
+    console.log(`💡 Try one of these solutions:`);
+    console.log(`   1. Stop the other process using port ${PORT}`);
+    console.log(`   2. Use a different port: PORT=3001 npm run dev:no-redis`);
+    console.log(`   3. Find and kill the process: netstat -ano | findstr :${PORT}`);
+    process.exit(1);
+  } else {
+    console.error('Server error:', error);
+    process.exit(1);
   }
 });
 

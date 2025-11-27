@@ -137,15 +137,29 @@ export class NotificationService {
   }
 
   async sendNotification(data: NotificationData): Promise<boolean> {
-    await notificationQueue.add('send-notification', data, {
-      attempts: 3,
-      backoff: {
-        type: 'exponential',
-        delay: 2000,
-      },
-    });
-
-    return true;
+    try {
+      if (!notificationQueue) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Notification queue not available - Redis may not be running');
+        }
+        return false;
+      }
+      await notificationQueue.add('send-notification', data, {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 2000,
+        },
+      });
+      return true;
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Failed to queue notification:', error);
+      } else {
+        console.error('Failed to queue notification:', error);
+      }
+      return false;
+    }
   }
 
   private async logNotification(data: NotificationData & { delivered: boolean }): Promise<void> {

@@ -2,6 +2,7 @@ import { Response, NextFunction } from 'express';
 import { authenticate, authorize, AuthRequest } from '../../middleware/auth';
 import { generateToken } from '../../utils/jwt';
 import prisma from '../../config/database';
+import { UserType } from '@prisma/client';
 
 jest.mock('../../config/database', () => ({
   __esModule: true,
@@ -65,6 +66,7 @@ describe('Auth Middleware', () => {
         id: '123',
         email: 'test@example.com',
         role: 'family_member',
+        userType: UserType.INDIVIDUAL,
         familyId: null,
         isActive: true,
       };
@@ -73,6 +75,7 @@ describe('Auth Middleware', () => {
         id: mockUser.id,
         email: mockUser.email,
         role: mockUser.role,
+        userType: mockUser.userType,
         familyId: mockUser.familyId,
       });
 
@@ -93,6 +96,7 @@ describe('Auth Middleware', () => {
         id: mockUser.id,
         email: mockUser.email,
         role: mockUser.role,
+        userType: mockUser.userType,
         familyId: mockUser.familyId,
       });
     });
@@ -102,6 +106,7 @@ describe('Auth Middleware', () => {
         id: '123',
         email: 'test@example.com',
         role: 'family_member',
+        userType: UserType.INDIVIDUAL,
         familyId: null,
         isActive: false,
       };
@@ -110,6 +115,7 @@ describe('Auth Middleware', () => {
         id: mockUser.id,
         email: mockUser.email,
         role: mockUser.role,
+        userType: mockUser.userType,
         familyId: mockUser.familyId,
       });
 
@@ -136,6 +142,7 @@ describe('Auth Middleware', () => {
         id: '123',
         email: 'test@example.com',
         role: 'admin',
+        userType: UserType.ADMIN,
         familyId: null,
       };
 
@@ -154,6 +161,7 @@ describe('Auth Middleware', () => {
         id: '123',
         email: 'test@example.com',
         role: 'family_member',
+        userType: UserType.INDIVIDUAL,
         familyId: null,
       };
 

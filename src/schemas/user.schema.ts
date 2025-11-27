@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { UserType } from '@prisma/client';
 
 export const updateUserSchema = z.object({
   params: z.object({
@@ -10,6 +11,7 @@ export const updateUserSchema = z.object({
     phoneNumber: z.string().optional(),
     genderActual: z.string().optional(),
     profilePictureUrl: z.string().url().optional(),
+    userType: z.nativeEnum(UserType).optional(),
   }),
 });
 

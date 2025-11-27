@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 export const createQuestionnarySchema = z.object({
   body: z.object({
-    userId: z.string().uuid('Invalid user ID'),
     step: z.number().int().min(1).optional(),
     nbPersonsFollowed: z.number().int().min(1).optional(),
     hasGeneralPractitioner: z.boolean().optional(),

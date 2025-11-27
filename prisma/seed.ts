@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserType } from '@prisma/client';
 import { hashPassword } from '../src/utils/bcrypt';
 
 const prisma = new PrismaClient();
@@ -25,21 +25,31 @@ async function main() {
   });
 
   const adminPassword = await hashPassword('admin123');
-  const adminUser = await prisma.user.create({
-    data: {
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@remindr.app' },
+    update: {
+      userType: UserType.ADMIN,
+      role: 'admin',
+    },
+    create: {
       email: 'admin@remindr.app',
       passwordHash: adminPassword,
       firstName: 'Admin',
       lastName: 'User',
       dateOfBirth: new Date('1990-01-01'),
       role: 'admin',
+      userType: UserType.ADMIN,
       familyId: family.id,
     },
   });
 
   const userPassword = await hashPassword('user123');
-  const user = await prisma.user.create({
-    data: {
+  const user = await prisma.user.upsert({
+    where: { email: 'user@remindr.app' },
+    update: {
+      userType: UserType.INDIVIDUAL,
+    },
+    create: {
       email: 'user@remindr.app',
       passwordHash: userPassword,
       firstName: 'John',
@@ -49,12 +59,15 @@ async function main() {
       genderBirth: 'male',
       genderActual: 'male',
       role: 'family_member',
+      userType: UserType.INDIVIDUAL,
       familyId: family.id,
     },
   });
 
-  await prisma.healthProfile.create({
-    data: {
+  await prisma.healthProfile.upsert({
+    where: { userId: user.id },
+    update: {},
+    create: {
       userId: user.id,
       bloodType: 'O+',
       height: 175.5,
@@ -139,8 +152,10 @@ async function main() {
     },
   });
 
-  await prisma.questionnary.create({
-    data: {
+  await prisma.questionnary.upsert({
+    where: { userId: user.id },
+    update: {},
+    create: {
       userId: user.id,
       step: 5,
       nbPersonsFollowed: 1,

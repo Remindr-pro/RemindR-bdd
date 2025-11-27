@@ -65,6 +65,7 @@ delete process.env.FCM_SERVER_KEY;
 delete process.env.FCM_PROJECT_ID;
 
 jest.mock('../config/redis', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const Redis = require('ioredis');
   const mockRedis = new Redis({
     host: 'localhost',

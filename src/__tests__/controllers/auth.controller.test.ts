@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthController } from '../../controllers/auth.controller';
 import prisma from '../../config/database';
-import { hashPassword } from '../../utils/bcrypt';
+import { hashPassword, comparePassword } from '../../utils/bcrypt';
 import { UserType } from '@prisma/client';
 
 jest.mock('../../config/database', () => ({
@@ -129,7 +129,6 @@ describe('AuthController', () => {
       mockRequest.body = mockLoginData;
 
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
-      const { comparePassword } = require('../../utils/bcrypt');
       (comparePassword as jest.Mock).mockResolvedValue(true);
 
       await authController.login(
@@ -164,7 +163,6 @@ describe('AuthController', () => {
       mockRequest.body = mockLoginData;
 
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
-      const { comparePassword } = require('../../utils/bcrypt');
       (comparePassword as jest.Mock).mockResolvedValue(false);
 
       await authController.login(

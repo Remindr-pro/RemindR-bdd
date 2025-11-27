@@ -1,5 +1,6 @@
 import { reminderService } from '../../services/reminder.service';
 import prisma from '../../config/database';
+import { notificationService } from '../../services/notification.service';
 
 jest.mock('../../config/database', () => ({
   __esModule: true,
@@ -55,7 +56,6 @@ describe('ReminderService', () => {
       });
       (prisma.reminder.update as jest.Mock).mockResolvedValue({});
 
-      const { notificationService } = require('../../services/notification.service');
       (notificationService.sendNotification as jest.Mock).mockResolvedValue(true);
 
       await reminderService.processScheduledReminders();
@@ -90,7 +90,6 @@ describe('ReminderService', () => {
 
       await reminderService.processScheduledReminders();
 
-      const { notificationService } = require('../../services/notification.service');
       expect(notificationService.sendNotification).not.toHaveBeenCalled();
     });
 
@@ -115,7 +114,6 @@ describe('ReminderService', () => {
 
       await reminderService.processScheduledReminders();
 
-      const { notificationService } = require('../../services/notification.service');
       expect(notificationService.sendNotification).not.toHaveBeenCalled();
     });
   });

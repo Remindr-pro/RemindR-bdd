@@ -1,9 +1,10 @@
+import Queue from 'bull';
 import { notificationQueue } from './queue.service';
 import { notificationService } from './notification.service';
 import { NotificationData } from '../types/notification.types';
 
 if (notificationQueue) {
-  notificationQueue.process('send-notification', async (job) => {
+  notificationQueue.process('send-notification', async (job: Queue.Job<NotificationData>) => {
     const data: NotificationData = job.data;
 
     switch (data.notificationType) {

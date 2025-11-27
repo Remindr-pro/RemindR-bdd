@@ -17,8 +17,8 @@ const redisConfig = {
   enableReadyCheck: false,
 };
 
-let notificationQueue: Queue;
-let reminderQueue: Queue;
+let notificationQueue: Queue.Queue;
+let reminderQueue: Queue.Queue;
 
 try {
   notificationQueue = new Queue('notifications', {
@@ -37,7 +37,7 @@ try {
 
   let errorLogged = false;
 
-  notificationQueue.on('error', (error) => {
+  notificationQueue.on('error', (error: Error & { code?: string }) => {
     if (process.env.NODE_ENV === 'development') {
       if (error.message && (error.message.includes('ECONNREFUSED') || error.code === 'ECONNREFUSED')) {
         if (!errorLogged) {
@@ -55,7 +55,7 @@ try {
     }
   });
 
-  reminderQueue.on('error', (error) => {
+  reminderQueue.on('error', (error: Error & { code?: string }) => {
     if (process.env.NODE_ENV === 'development') {
       if (error.message && (error.message.includes('ECONNREFUSED') || error.code === 'ECONNREFUSED')) {
         return;

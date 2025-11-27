@@ -25,7 +25,7 @@ async function main() {
   });
 
   const adminPassword = await hashPassword('admin123');
-  const adminUser = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'admin@remindr.app' },
     update: {
       userType: UserType.ADMIN,
@@ -90,7 +90,7 @@ async function main() {
     },
   });
 
-  const appointmentType = await prisma.reminderType.create({
+  await prisma.reminderType.create({
     data: {
       name: 'Appointment',
       category: 'health',
@@ -141,7 +141,7 @@ async function main() {
     },
   });
 
-  const partner = await prisma.partner.create({
+  await prisma.partner.create({
     data: {
       name: 'Health Clinic',
       description: 'A trusted health clinic partner',

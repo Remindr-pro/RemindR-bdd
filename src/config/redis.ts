@@ -34,7 +34,7 @@ if (process.env.NODE_ENV !== 'test') {
     redisErrorLogged = false;
   });
 
-  redis.on('error', (err) => {
+  redis.on('error', (err: Error & { code?: string }) => {
     if (process.env.NODE_ENV === 'development') {
       if (!redisErrorLogged && (err.code === 'ECONNREFUSED' || err.message?.includes('ECONNREFUSED'))) {
         console.warn('⚠️  Redis not available - queues will not work. Start Redis with: npm run redis:start');

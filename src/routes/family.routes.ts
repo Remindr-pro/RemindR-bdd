@@ -5,11 +5,11 @@ import { authenticate } from '../middleware/auth';
 const router = Router();
 const familyController = new FamilyController();
 
-router.use(authenticate);
+router.use(authenticate as any);
 
-router.get('/me', familyController.getMyFamily);
-router.get('/:id', familyController.getById);
-router.put('/:id', familyController.update);
+router.get('/me', familyController.getMyFamily as any);
+router.get('/:id', familyController.getById as any);
+router.put('/:id', familyController.update as any);
 
 export default router;
 

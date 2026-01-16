@@ -55,7 +55,7 @@ describe('Reminder Integration Tests', () => {
       description: 'Test description',
       scheduledTime: '09:00:00',
       recurrence: { frequency: 'daily' },
-      startDate: '2024-01-01',
+      startDate: '2026-01-01',
     };
 
     mockRequest.body = reminderData;

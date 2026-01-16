@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import { logger } from './logger';
 
 const redis = process.env.NODE_ENV === 'test'
   ? (new Redis({
@@ -30,28 +31,26 @@ if (process.env.NODE_ENV !== 'test') {
   let redisErrorLogged = false;
 
   redis.on('connect', () => {
-    console.log('✅ Redis connected');
+    logger.info('Redis connected');
     redisErrorLogged = false;
   });
 
   redis.on('error', (err: Error & { code?: string }) => {
     if (process.env.NODE_ENV === 'development') {
       if (!redisErrorLogged && (err.code === 'ECONNREFUSED' || err.message?.includes('ECONNREFUSED'))) {
-        console.warn('⚠️  Redis not available - queues will not work. Start Redis with: npm run redis:start');
+        logger.warn('Redis not available - queues will not work. Start Redis with: npm run redis:start');
         redisErrorLogged = true;
       }
     } else {
       if (!redisErrorLogged) {
-        console.error('Redis connection error:', err);
+        logger.error({ err }, 'Redis connection error');
         redisErrorLogged = true;
       }
     }
   });
 
   redis.on('ready', () => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('✅ Redis ready');
-    }
+    logger.debug('Redis ready');
   });
 }
 

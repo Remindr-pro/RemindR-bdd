@@ -63,6 +63,7 @@ process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'test-refresh
 delete process.env.FCM_SERVICE_ACCOUNT_PATH;
 delete process.env.FCM_SERVER_KEY;
 delete process.env.FCM_PROJECT_ID;
+delete process.env.SENTRY_DSN;
 
 jest.mock('../config/redis', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -96,6 +97,21 @@ jest.mock('../services/queue.service', () => {
     reminderQueue: mockQueue,
   };
 });
+
+jest.mock('../config/sentry', () => {
+  return {
+    __esModule: true,
+    initSentry: jest.fn(),
+    captureException: jest.fn(),
+    Sentry: {
+      captureException: jest.fn(),
+    },
+  };
+});
+
+jest.mock('@sentry/node', () => ({
+  expressErrorHandler: jest.fn(() => (_err: unknown, _req: unknown, _res: unknown, next: () => void) => next()),
+}));
 
 afterAll(() => {
   console.error = originalError;

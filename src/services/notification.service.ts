@@ -6,6 +6,8 @@ import fs from 'fs';
 import prisma from '../config/database';
 import { notificationQueue } from './queue.service';
 import { NotificationData } from '../types/notification.types';
+import { logger } from '../config/logger';
+import { webhookService } from './webhook.service';
 
 if (process.env.FCM_SERVICE_ACCOUNT_PATH) {
   try {
@@ -22,11 +24,10 @@ if (process.env.FCM_SERVICE_ACCOUNT_PATH) {
       credential: admin.credential.cert(serviceAccount),
     });
   } catch (error) {
-    console.error('Error loading Firebase Service Account:', error);
-    console.error(`Please check that FCM_SERVICE_ACCOUNT_PATH (${process.env.FCM_SERVICE_ACCOUNT_PATH}) points to a valid JSON file`);
+    logger.error({ error, path: process.env.FCM_SERVICE_ACCOUNT_PATH }, 'Error loading Firebase Service Account');
   }
 } else if (process.env.FCM_SERVER_KEY && process.env.FCM_PROJECT_ID) {
-  console.warn('Using FCM_SERVER_KEY: Admin SDK requires Service Account for full functionality');
+  logger.warn('Using FCM_SERVER_KEY: Admin SDK requires Service Account for full functionality');
   admin.initializeApp({
     projectId: process.env.FCM_PROJECT_ID,
   });
@@ -44,7 +45,7 @@ export class NotificationService {
   async sendPushNotification(data: NotificationData): Promise<boolean> {
     try {
       if (!data.fcmToken || !admin.apps.length) {
-        console.warn('FCM not configured or token missing');
+        logger.warn('FCM not configured or token missing');
         return false;
       }
 
@@ -63,9 +64,15 @@ export class NotificationService {
         delivered: true,
       });
 
+      await webhookService.triggerWebhook('notification.sent', {
+        userId: data.userId,
+        notificationType: data.notificationType,
+        delivered: true,
+      });
+
       return true;
     } catch (error) {
-      console.error('Push notification error:', error);
+      logger.error({ error, data }, 'Push notification error');
       await this.logNotification({
         ...data,
         delivered: false,
@@ -77,7 +84,7 @@ export class NotificationService {
   async sendEmail(data: NotificationData): Promise<boolean> {
     try {
       if (!data.email || !process.env.SENDGRID_API_KEY) {
-        console.warn('SendGrid not configured or email missing');
+        logger.warn('SendGrid not configured or email missing');
         return false;
       }
 
@@ -96,9 +103,15 @@ export class NotificationService {
         delivered: true,
       });
 
+      await webhookService.triggerWebhook('notification.sent', {
+        userId: data.userId,
+        notificationType: data.notificationType,
+        delivered: true,
+      });
+
       return true;
     } catch (error) {
-      console.error('Email notification error:', error);
+      logger.error({ error, data }, 'Email notification error');
       await this.logNotification({
         ...data,
         delivered: false,
@@ -110,7 +123,7 @@ export class NotificationService {
   async sendSMS(data: NotificationData): Promise<boolean> {
     try {
       if (!data.phoneNumber || !twilioClient || !process.env.TWILIO_PHONE_NUMBER) {
-        console.warn('Twilio not configured or phone number missing');
+        logger.warn('Twilio not configured or phone number missing');
         return false;
       }
 
@@ -125,9 +138,15 @@ export class NotificationService {
         delivered: true,
       });
 
+      await webhookService.triggerWebhook('notification.sent', {
+        userId: data.userId,
+        notificationType: data.notificationType,
+        delivered: true,
+      });
+
       return true;
     } catch (error) {
-      console.error('SMS notification error:', error);
+      logger.error({ error, data }, 'SMS notification error');
       await this.logNotification({
         ...data,
         delivered: false,
@@ -139,9 +158,7 @@ export class NotificationService {
   async sendNotification(data: NotificationData): Promise<boolean> {
     try {
       if (!notificationQueue) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Notification queue not available - Redis may not be running');
-        }
+        logger.warn('Notification queue not available - Redis may not be running');
         return false;
       }
       await notificationQueue.add('send-notification', data, {
@@ -153,11 +170,7 @@ export class NotificationService {
       });
       return true;
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Failed to queue notification:', error);
-      } else {
-        console.error('Failed to queue notification:', error);
-      }
+      logger.error({ error, data }, 'Failed to queue notification');
       return false;
     }
   }
@@ -176,7 +189,7 @@ export class NotificationService {
         },
       });
     } catch (error) {
-      console.error('Error logging notification:', error);
+      logger.error({ error, data }, 'Error logging notification');
     }
   }
 }

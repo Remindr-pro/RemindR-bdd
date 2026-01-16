@@ -29,4 +29,3 @@ export const verifyToken = (token: string): TokenPayload => {
 export const verifyRefreshToken = (token: string): TokenPayload => {
   return jwt.verify(token, jwtConfig.refreshSecret) as TokenPayload;
 };
-

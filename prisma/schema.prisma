@@ -8,31 +8,31 @@ datasource db {
 }
 
 model InsuranceCompany {
-  id            String   @id @default(uuid()) @db.Uuid
-  name          String?  @db.VarChar
-  contactEmail  String?  @map("contact_email") @db.VarChar
-  phoneNumber   String?  @map("phone_number") @db.VarChar
-  address       String?  @db.Text
-  isActive      Boolean  @default(true) @map("is_active")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String?  @db.VarChar
+  contactEmail String?  @map("contact_email") @db.VarChar
+  phoneNumber  String?  @map("phone_number") @db.VarChar
+  address      String?  @db.Text
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  families      Family[]
+  families Family[]
 
   @@map("insurance_companies")
 }
 
 model Family {
-  id                    String   @id @default(uuid()) @db.Uuid
-  insuranceCompanyId    String?  @map("insurance_company_id") @db.Uuid
-  familyName            String?  @map("family_name") @db.VarChar
-  primaryContactEmail   String?  @map("primary_contact_email") @db.VarChar
-  subscriptionStatus    String   @default("active") @map("subscription_status") @db.VarChar
-  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+  id                  String   @id @default(uuid()) @db.Uuid
+  insuranceCompanyId  String?  @map("insurance_company_id") @db.Uuid
+  familyName          String?  @map("family_name") @db.VarChar
+  primaryContactEmail String?  @map("primary_contact_email") @db.VarChar
+  subscriptionStatus  String   @default("active") @map("subscription_status") @db.VarChar
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  insuranceCompany      InsuranceCompany? @relation(fields: [insuranceCompanyId], references: [id])
-  users                 User[]
+  insuranceCompany InsuranceCompany? @relation(fields: [insuranceCompanyId], references: [id])
+  users            User[]
 
   @@map("families")
 }
@@ -61,13 +61,17 @@ model User {
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  family            Family?          @relation(fields: [familyId], references: [id])
-  healthProfile     HealthProfile?
-  reminders         Reminder[]
-  recommendations   Recommendation[]
-  notificationLogs  NotificationLog[]
-  questionnary      Questionnary?
+  family           Family?           @relation(fields: [familyId], references: [id])
+  healthProfile    HealthProfile?
+  reminders        Reminder[]
+  recommendations  Recommendation[]
+  notificationLogs NotificationLog[]
+  questionnary     Questionnary?
 
+  @@index([familyId])
+  @@index([isActive])
+  @@index([userType])
+  @@index([role])
   @@map("users")
 }
 
@@ -78,99 +82,105 @@ model HealthProfile {
   height            Decimal? @db.Decimal
   weight            Decimal? @db.Decimal
   allergies         String[] @default([])
-  chronicConditions String[] @map("chronic_conditions") @default([])
+  chronicConditions String[] @default([]) @map("chronic_conditions")
   medications       String[] @default([])
   preferences       Json?
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("health_profiles")
 }
 
 model ReminderType {
-  id          String     @id @default(uuid()) @db.Uuid
-  name        String     @db.VarChar
-  category    String?    @db.VarChar
-  description String?    @db.Text
-  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamp(6)
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar
+  category    String?  @db.VarChar
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
-  reminders   Reminder[]
+  reminders Reminder[]
 
   @@map("reminder_types")
 }
 
 model Reminder {
-  id              String       @id @default(uuid()) @db.Uuid
-  userId          String       @map("user_id") @db.Uuid
-  typeId          String       @map("type_id") @db.Uuid
-  title           String       @db.VarChar
-  description     String?      @db.Text
-  scheduledTime   DateTime     @map("scheduled_time") @db.Time(6)
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  typeId          String    @map("type_id") @db.Uuid
+  title           String    @db.VarChar
+  description     String?   @db.Text
+  scheduledTime   DateTime  @map("scheduled_time") @db.Time(6)
   recurrence      Json?
-  isActive        Boolean      @default(true) @map("is_active")
-  startDate       DateTime?    @map("start_date") @db.Date
-  endDate         DateTime?    @map("end_date") @db.Date
-  lastTriggeredAt DateTime?    @map("last_triggered_at") @db.Timestamp(6)
-  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt       DateTime     @updatedAt @map("updated_at") @db.Timestamp(6)
+  isActive        Boolean   @default(true) @map("is_active")
+  startDate       DateTime? @map("start_date") @db.Date
+  endDate         DateTime? @map("end_date") @db.Date
+  lastTriggeredAt DateTime? @map("last_triggered_at") @db.Timestamp(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type            ReminderType @relation(fields: [typeId], references: [id])
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type             ReminderType      @relation(fields: [typeId], references: [id])
   notificationLogs NotificationLog[]
 
+  @@index([userId, isActive])
+  @@index([isActive, startDate, endDate])
+  @@index([lastTriggeredAt])
   @@map("reminders")
 }
 
 model ArticleCategory {
-  id            String    @id @default(uuid()) @db.Uuid
-  name          String    @db.VarChar
-  description   String?   @db.Text
-  targetAgeMin  Int?      @map("target_age_min")
-  targetAgeMax  Int?      @map("target_age_max")
-  tags          String[]  @default([])
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar
+  description  String?  @db.Text
+  targetAgeMin Int?     @map("target_age_min")
+  targetAgeMax Int?     @map("target_age_max")
+  tags         String[] @default([])
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
-  articles      Article[]
+  articles Article[]
 
   @@map("article_categories")
 }
 
 model Article {
-  id                String          @id @default(uuid()) @db.Uuid
-  categoryId        String          @map("category_id") @db.Uuid
-  title             String          @db.VarChar
-  content           String          @db.Text
-  excerpt           String?         @db.Text
-  coverImageUrl     String?         @map("cover_image_url") @db.Text
-  readingTimeMinutes Int?           @map("reading_time_minutes")
-  author            String?         @db.VarChar
-  isPublished       Boolean         @default(false) @map("is_published")
-  publishedAt       DateTime?       @map("published_at") @db.Timestamp(6)
-  targetAudience    Json?           @map("target_audience")
-  seoKeywords       String[]        @map("seo_keywords") @default([])
-  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamp(6)
+  id                 String    @id @default(uuid()) @db.Uuid
+  categoryId         String    @map("category_id") @db.Uuid
+  title              String    @db.VarChar
+  content            String    @db.Text
+  excerpt            String?   @db.Text
+  coverImageUrl      String?   @map("cover_image_url") @db.Text
+  readingTimeMinutes Int?      @map("reading_time_minutes")
+  author             String?   @db.VarChar
+  isPublished        Boolean   @default(false) @map("is_published")
+  publishedAt        DateTime? @map("published_at") @db.Timestamp(6)
+  targetAudience     Json?     @map("target_audience")
+  seoKeywords        String[]  @default([]) @map("seo_keywords")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  category          ArticleCategory @relation(fields: [categoryId], references: [id])
-  recommendations   Recommendation[]
+  category        ArticleCategory  @relation(fields: [categoryId], references: [id])
+  recommendations Recommendation[]
 
+  @@index([categoryId, isPublished])
+  @@index([isPublished, publishedAt])
+  @@index([createdAt])
   @@map("articles")
 }
 
 model Partner {
-  id              String           @id @default(uuid()) @db.Uuid
-  name            String           @db.VarChar
-  description     String?         @db.Text
-  category        String?         @db.VarChar
-  websiteUrl      String?         @map("website_url") @db.Text
-  logoUrl         String?         @map("logo_url") @db.Text
-  contactEmail    String?         @map("contact_email") @db.VarChar
-  isActive        Boolean         @default(true) @map("is_active")
-  isExtern        Boolean         @default(true) @map("is_extern")
-  affiliateProgram Json?          @map("affiliate_program")
-  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamp(6)
+  id               String   @id @default(uuid()) @db.Uuid
+  name             String   @db.VarChar
+  description      String?  @db.Text
+  category         String?  @db.VarChar
+  websiteUrl       String?  @map("website_url") @db.Text
+  logoUrl          String?  @map("logo_url") @db.Text
+  contactEmail     String?  @map("contact_email") @db.VarChar
+  isActive         Boolean  @default(true) @map("is_active")
+  isExtern         Boolean  @default(true) @map("is_extern")
+  affiliateProgram Json?    @map("affiliate_program")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
   recommendations Recommendation[]
 
@@ -178,64 +188,109 @@ model Partner {
 }
 
 model Recommendation {
-  id                String       @id @default(uuid()) @db.Uuid
-  userId            String       @map("user_id") @db.Uuid
-  partnerId         String?      @map("partner_id") @db.Uuid
-  articleId         String?      @map("article_id") @db.Uuid
-  title             String       @db.VarChar
-  description       String?      @db.Text
-  recommendationType String      @map("recommendation_type") @db.VarChar
-  priority          Int          @default(1)
-  isDismissed       Boolean      @default(false) @map("is_dismissed")
-  dismissedAt       DateTime?    @map("dismissed_at") @db.Timestamp(6)
-  clickedAt         DateTime?    @map("clicked_at") @db.Timestamp(6)
-  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  id                 String    @id @default(uuid()) @db.Uuid
+  userId             String    @map("user_id") @db.Uuid
+  partnerId          String?   @map("partner_id") @db.Uuid
+  articleId          String?   @map("article_id") @db.Uuid
+  title              String    @db.VarChar
+  description        String?   @db.Text
+  recommendationType String    @map("recommendation_type") @db.VarChar
+  priority           Int       @default(1)
+  isDismissed        Boolean   @default(false) @map("is_dismissed")
+  dismissedAt        DateTime? @map("dismissed_at") @db.Timestamp(6)
+  clickedAt          DateTime? @map("clicked_at") @db.Timestamp(6)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
 
-  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  partner           Partner?     @relation(fields: [partnerId], references: [id])
-  article           Article?     @relation(fields: [articleId], references: [id])
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partner Partner? @relation(fields: [partnerId], references: [id])
+  article Article? @relation(fields: [articleId], references: [id])
 
+  @@index([userId, isDismissed])
+  @@index([priority, createdAt])
   @@map("recommendations")
 }
 
 model NotificationLog {
-  id              String     @id @default(uuid()) @db.Uuid
-  userId          String     @map("user_id") @db.Uuid
-  reminderId      String?    @map("reminder_id") @db.Uuid
-  notificationType String?   @map("notification_type") @db.VarChar
-  title           String?    @db.VarChar
-  message         String?    @db.Text
-  sentAt          DateTime   @map("sent_at") @db.Timestamp(6)
-  delivered       Boolean    @default(false)
-  clicked         Boolean    @default(false)
-  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamp(6)
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  reminderId       String?  @map("reminder_id") @db.Uuid
+  notificationType String?  @map("notification_type") @db.VarChar
+  title            String?  @db.VarChar
+  message          String?  @db.Text
+  sentAt           DateTime @map("sent_at") @db.Timestamp(6)
+  delivered        Boolean  @default(false)
+  clicked          Boolean  @default(false)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
-  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reminder        Reminder?  @relation(fields: [reminderId], references: [id])
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminder Reminder? @relation(fields: [reminderId], references: [id])
 
+  @@index([userId, sentAt])
+  @@index([reminderId])
+  @@index([delivered])
   @@map("notification_logs")
 }
 
 model Questionnary {
-  id                        String    @id @default(uuid()) @db.Uuid
-  userId                    String    @unique @map("user_id") @db.Uuid
-  step                      Int       @default(1)
-  nbPersonsFollowed         Int       @default(1) @map("nb_persons_followed")
-  hasGeneralPractitioner    Boolean?  @map("has_general_practitioner")
-  generalPractitionerName   String?   @map("general_practitioner_name") @db.VarChar
-  physicalActivityFrequency String?   @map("physical_activity_frequency") @db.VarChar
-  dietType                  String?   @map("diet_type") @db.VarChar
-  usesAlternativeMedicine   Boolean   @default(false) @map("uses_alternative_medicine")
-  alternativeMedicineTypes  String[]  @map("alternative_medicine_types") @default([])
-  lastHealthCheck           String?   @map("last_health_check") @db.VarChar
-  enabledReminderTypes      String[]  @map("enabled_reminder_types") @default([])
-  reminderFrequency         String?   @map("reminder_frequency") @db.VarChar
-  enabledNotificationChannels String[] @map("enabled_notification_channels") @default([])
-  createdAt                 DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt                 DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
+  id                          String   @id @default(uuid()) @db.Uuid
+  userId                      String   @unique @map("user_id") @db.Uuid
+  step                        Int      @default(1)
+  nbPersonsFollowed           Int      @default(1) @map("nb_persons_followed")
+  hasGeneralPractitioner      Boolean? @map("has_general_practitioner")
+  generalPractitionerName     String?  @map("general_practitioner_name") @db.VarChar
+  physicalActivityFrequency   String?  @map("physical_activity_frequency") @db.VarChar
+  dietType                    String?  @map("diet_type") @db.VarChar
+  usesAlternativeMedicine     Boolean  @default(false) @map("uses_alternative_medicine")
+  alternativeMedicineTypes    String[] @default([]) @map("alternative_medicine_types")
+  lastHealthCheck             String?  @map("last_health_check") @db.VarChar
+  enabledReminderTypes        String[] @default([]) @map("enabled_reminder_types")
+  reminderFrequency           String?  @map("reminder_frequency") @db.VarChar
+  enabledNotificationChannels String[] @default([]) @map("enabled_notification_channels")
+  createdAt                   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt                   DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  user                      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("questionnary")
 }
 
+model Webhook {
+  id              String    @id @default(uuid()) @db.Uuid
+  url             String    @db.Text
+  events          String[]  @default([])
+  secret          String?   @db.VarChar
+  isActive        Boolean   @default(true) @map("is_active")
+  lastTriggeredAt DateTime? @map("last_triggered_at") @db.Timestamp(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  webhookLogs WebhookLog[]
+
+  @@index([isActive])
+  @@map("webhooks")
+}
+
+model WebhookLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  webhookId      String   @map("webhook_id") @db.Uuid
+  event          String   @db.VarChar
+  payload        Json
+  responseStatus Int?     @map("response_status")
+  responseBody   String?  @map("response_body") @db.Text
+  error          String?  @db.Text
+  triggeredAt    DateTime @default(now()) @map("triggered_at") @db.Timestamp(6)
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@map("webhook_logs")
+}
+
+model TokenBlacklist {
+  id        String   @id @default(uuid()) @db.Uuid
+  token     String   @unique @db.VarChar
+  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([expiresAt])
+  @@map("token_blacklist")
+}

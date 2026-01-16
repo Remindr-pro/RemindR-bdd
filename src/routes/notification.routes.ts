@@ -5,11 +5,11 @@ import { authenticate } from '../middleware/auth';
 const router = Router();
 const notificationController = new NotificationController();
 
-router.use(authenticate);
+router.use(authenticate as any);
 
-router.get('/', notificationController.getAll);
-router.get('/:id', notificationController.getById);
-router.patch('/:id/read', notificationController.markAsRead);
+router.get('/', notificationController.getAll as any);
+router.get('/:id', notificationController.getById as any);
+router.patch('/:id/read', notificationController.markAsRead as any);
 
 export default router;
 

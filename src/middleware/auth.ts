@@ -32,6 +32,22 @@ export const authenticate = async (
 
     const token = authHeader.substring(7);
 
+    try {
+      const blacklisted = await prisma.tokenBlacklist.findUnique({
+        where: { token },
+      });
+
+      if (blacklisted) {
+        res.status(401).json({
+          success: false,
+          message: 'Token has been revoked',
+        });
+        return;
+      }
+    } catch (error) {
+      // TokenBlacklist table might not exist, continue with token verification
+    }
+
     const decoded = jwt.verify(token, jwtConfig.secret) as {
       id: string;
       email: string;

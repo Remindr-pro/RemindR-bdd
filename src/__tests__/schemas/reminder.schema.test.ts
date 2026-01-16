@@ -12,7 +12,7 @@ describe('Reminder Schemas', () => {
           recurrence: {
             frequency: 'daily',
           },
-          startDate: '2024-01-01',
+          startDate: '2026-01-01',
         },
       };
 

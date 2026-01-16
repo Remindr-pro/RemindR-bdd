@@ -8,6 +8,7 @@ import recommendationRoutes from './recommendation.routes';
 import notificationRoutes from './notification.routes';
 import questionnaryRoutes from './questionnary.routes';
 import familyRoutes from './family.routes';
+import webhookRoutes from './webhook.routes';
 
 const router = Router();
 
@@ -20,6 +21,6 @@ router.use('/recommendations', recommendationRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/questionnary', questionnaryRoutes);
 router.use('/families', familyRoutes);
+router.use('/webhooks', webhookRoutes);
 
 export default router;
-

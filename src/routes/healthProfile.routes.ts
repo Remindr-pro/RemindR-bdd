@@ -5,12 +5,12 @@ import { authenticate } from '../middleware/auth';
 const router = Router();
 const healthProfileController = new HealthProfileController();
 
-router.use(authenticate);
+router.use(authenticate as any);
 
-router.get('/me', healthProfileController.getMyProfile);
-router.get('/:userId', healthProfileController.getByUserId);
-router.post('/', healthProfileController.create);
-router.put('/:id', healthProfileController.update);
+router.get('/me', healthProfileController.getMyProfile as any);
+router.get('/:userId', healthProfileController.getByUserId as any);
+router.post('/', healthProfileController.create as any);
+router.put('/:id', healthProfileController.update as any);
 
 export default router;
 

@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/database';
+import { invalidateCache } from '../middleware/cache';
+import { webhookService } from '../services/webhook.service';
 
 export class ArticleController {
   async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -100,6 +102,12 @@ export class ArticleController {
         },
       });
 
+      await invalidateCache('articles');
+      await webhookService.triggerWebhook('article.created', {
+        articleId: article.id,
+        title: article.title,
+      });
+
       res.status(201).json({
         success: true,
         message: 'Article created successfully',
@@ -138,6 +146,8 @@ export class ArticleController {
         },
       });
 
+      await invalidateCache('articles');
+
       res.json({
         success: true,
         message: 'Article updated successfully',
@@ -155,6 +165,8 @@ export class ArticleController {
       await prisma.article.delete({
         where: { id },
       });
+
+      await invalidateCache('articles');
 
       res.json({
         success: true,
@@ -175,6 +187,12 @@ export class ArticleController {
           isPublished: true,
           publishedAt: new Date(),
         },
+      });
+
+      await invalidateCache('articles');
+      await webhookService.triggerWebhook('article.published', {
+        articleId: article.id,
+        title: article.title,
       });
 
       res.json({

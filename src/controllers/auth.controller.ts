@@ -4,6 +4,8 @@ import { hashPassword, comparePassword } from '../utils/bcrypt';
 import { generateToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { AuthRequest } from '../middleware/auth';
 import { UserType } from '@prisma/client';
+import { webhookService } from '../services/webhook.service';
+import { oauth2Config } from '../config/jwt';
 
 export class AuthController {
   async register(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -62,6 +64,12 @@ export class AuthController {
         role: user.role,
         userType: user.userType,
         familyId: user.familyId,
+      });
+
+      await webhookService.triggerWebhook('user.created', {
+        userId: user.id,
+        email: user.email,
+        userType: user.userType,
       });
 
       res.status(201).json({
@@ -208,8 +216,35 @@ export class AuthController {
     }
   }
 
-  async logout(_req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async logout(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        
+        try {
+          const jwt = require('jsonwebtoken');
+          const decoded = jwt.decode(token) as any;
+          
+          if (decoded && decoded.exp) {
+            const expiresAt = new Date(decoded.exp * 1000);
+            
+            try {
+              await prisma.tokenBlacklist.create({
+                data: {
+                  token,
+                  expiresAt,
+                },
+              });
+            } catch (error) {
+              // TokenBlacklist table might not exist yet, ignore
+            }
+          }
+        } catch (error) {
+          // Ignore token decode errors
+        }
+      }
+
       res.json({
         success: true,
         message: 'Logout successful',
@@ -257,32 +292,195 @@ export class AuthController {
     }
   }
 
-  async googleAuth(_req: Request, res: Response, _next: NextFunction): Promise<void> {
-    res.status(501).json({
-      success: false,
-      message: 'Google OAuth2 not implemented yet',
-    });
+  async googleAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!oauth2Config.google.clientId || !oauth2Config.google.clientSecret) {
+        res.status(503).json({
+          success: false,
+          message: 'Google OAuth2 is not configured',
+        });
+        return;
+      }
+
+      const passport = require('../config/passport').default;
+      passport.authenticate('google', {
+        scope: ['profile', 'email'],
+        state: req.query.redirect_uri as string || undefined,
+      })(req, res, next);
+    } catch (error) {
+      next(error);
+    }
   }
 
-  async googleCallback(_req: Request, res: Response, _next: NextFunction): Promise<void> {
-    res.status(501).json({
-      success: false,
-      message: 'Google OAuth2 callback not implemented yet',
-    });
+  async googleCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!oauth2Config.google.clientId || !oauth2Config.google.clientSecret) {
+        res.status(503).json({
+          success: false,
+          message: 'Google OAuth2 is not configured',
+        });
+        return;
+      }
+
+      const passport = require('../config/passport').default;
+      passport.authenticate('google', { session: false }, async (err: Error | null, user: any) => {
+        if (err || !user) {
+          res.status(401).json({
+            success: false,
+            message: 'Google authentication failed',
+          });
+          return;
+        }
+
+        if (!user.isActive) {
+          res.status(403).json({
+            success: false,
+            message: 'User account is inactive',
+          });
+          return;
+        }
+
+        const token = generateToken({
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          userType: user.userType,
+          familyId: user.familyId,
+        });
+
+        const refreshToken = generateRefreshToken({
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          userType: user.userType,
+          familyId: user.familyId,
+        });
+
+        const redirectUri = req.query.state as string || process.env.FRONTEND_URL || 'http://localhost:3000';
+        const separator = redirectUri.includes('?') ? '&' : '?';
+        res.redirect(`${redirectUri}${separator}token=${token}&refreshToken=${refreshToken}`);
+      })(req, res, next);
+    } catch (error) {
+      next(error);
+    }
   }
 
-  async appleAuth(_req: Request, res: Response, _next: NextFunction): Promise<void> {
-    res.status(501).json({
-      success: false,
-      message: 'Apple OAuth2 not implemented yet',
-    });
+  async appleAuth(req: Request, res: Response, _next: NextFunction): Promise<void> {
+    try {
+      if (!oauth2Config.apple.clientId) {
+        res.status(503).json({
+          success: false,
+          message: 'Apple OAuth2 is not configured',
+        });
+        return;
+      }
+
+      const redirectUri = encodeURIComponent(oauth2Config.apple.redirectUri);
+      const clientId = oauth2Config.apple.clientId;
+      const state = req.query.redirect_uri as string || '';
+      const appleAuthUrl = `https://appleid.apple.com/auth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=email%20name&response_mode=form_post&state=${encodeURIComponent(state)}`;
+
+      res.redirect(appleAuthUrl);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to initiate Apple authentication',
+      });
+    }
   }
 
-  async appleCallback(_req: Request, res: Response, _next: NextFunction): Promise<void> {
-    res.status(501).json({
-      success: false,
-      message: 'Apple OAuth2 callback not implemented yet',
-    });
+  async appleCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!oauth2Config.apple.clientId) {
+        res.status(503).json({
+          success: false,
+          message: 'Apple OAuth2 is not configured',
+        });
+        return;
+      }
+
+      const { code, user: userInfoString } = req.body;
+
+      if (!code) {
+        res.status(400).json({
+          success: false,
+          message: 'Authorization code is required',
+        });
+        return;
+      }
+
+      const { getAppleUserInfo } = require('../utils/appleAuth');
+      const appleUserInfo = await getAppleUserInfo(code);
+
+      let email = appleUserInfo.email;
+      let firstName = 'User';
+      let lastName = '';
+
+      if (userInfoString) {
+        try {
+          const userInfo = JSON.parse(userInfoString);
+          firstName = userInfo.name?.firstName || firstName;
+          lastName = userInfo.name?.lastName || lastName;
+        } catch {
+          // Ignore parsing errors
+        }
+      }
+
+      if (!email) {
+        res.status(400).json({
+          success: false,
+          message: 'Email not provided by Apple',
+        });
+        return;
+      }
+
+      let user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            email,
+            passwordHash: '',
+            firstName,
+            lastName,
+            dateOfBirth: new Date('1990-01-01'),
+            userType: UserType.INDIVIDUAL,
+          },
+        });
+      }
+
+      if (!user.isActive) {
+        res.status(403).json({
+          success: false,
+          message: 'User account is inactive',
+        });
+        return;
+      }
+
+      const token = generateToken({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        userType: user.userType,
+        familyId: user.familyId,
+      });
+
+      const refreshToken = generateRefreshToken({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        userType: user.userType,
+        familyId: user.familyId,
+      });
+
+      const redirectUri = req.body.state || process.env.FRONTEND_URL || 'http://localhost:3000';
+      const separator = redirectUri.includes('?') ? '&' : '?';
+      res.redirect(`${redirectUri}${separator}token=${token}&refreshToken=${refreshToken}`);
+    } catch (error) {
+      next(error);
+    }
   }
 }
 

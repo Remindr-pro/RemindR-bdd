@@ -1,5 +1,7 @@
 import prisma from '../config/database';
 import { notificationService } from './notification.service';
+import { logger } from '../config/logger';
+import { webhookService } from './webhook.service';
 
 export class ReminderService {
   async processScheduledReminders() {
@@ -93,8 +95,14 @@ export class ReminderService {
         where: { id: reminder.id },
         data: { lastTriggeredAt: new Date() },
       });
+
+      await webhookService.triggerWebhook('reminder.triggered', {
+        reminderId: reminder.id,
+        userId: reminder.userId,
+        title: reminder.title,
+      });
     } catch (error) {
-      console.error(`Error triggering reminder ${reminder.id}:`, error);
+      logger.error({ error, reminderId: reminder.id }, 'Error triggering reminder');
     }
   }
 }

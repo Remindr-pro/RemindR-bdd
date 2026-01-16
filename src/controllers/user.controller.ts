@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
+import { webhookService } from '../services/webhook.service';
 
 export class UserController {
   async getAll(_req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
@@ -95,6 +96,11 @@ export class UserController {
         },
       });
 
+      await webhookService.triggerWebhook('user.updated', {
+        userId: user.id,
+        email: user.email,
+      });
+
       res.json({
         success: true,
         message: 'User updated successfully',
@@ -108,6 +114,8 @@ export class UserController {
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+
+      await webhookService.triggerWebhook('user.deleted', { userId: id });
 
       await prisma.user.delete({
         where: { id },

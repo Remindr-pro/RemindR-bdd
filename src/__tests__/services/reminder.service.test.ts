@@ -39,7 +39,7 @@ describe('ReminderService', () => {
           title: 'Test Reminder',
           description: 'Test',
           isActive: true,
-          startDate: new Date('2024-01-01'),
+          startDate: new Date('2026-01-01'),
           endDate: null,
           lastTriggeredAt: null,
           user: {
@@ -75,7 +75,7 @@ describe('ReminderService', () => {
           title: 'Test Reminder',
           description: 'Test',
           isActive: true,
-          startDate: new Date('2024-01-01'),
+          startDate: new Date('2026-01-01'),
           endDate: null,
           lastTriggeredAt: now,
           user: {
@@ -101,7 +101,7 @@ describe('ReminderService', () => {
           scheduledTime: new Date('1970-01-01T09:00:00'),
           title: 'Test Reminder',
           isActive: false,
-          startDate: new Date('2024-01-01'),
+          startDate: new Date('2026-01-01'),
           endDate: null,
           user: {
             id: '123',

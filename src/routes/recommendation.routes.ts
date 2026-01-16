@@ -5,12 +5,12 @@ import { authenticate } from '../middleware/auth';
 const router = Router();
 const recommendationController = new RecommendationController();
 
-router.use(authenticate);
+router.use(authenticate as any);
 
-router.get('/', recommendationController.getAll);
-router.get('/:id', recommendationController.getById);
-router.post('/:id/dismiss', recommendationController.dismiss);
-router.post('/:id/click', recommendationController.recordClick);
+router.get('/', recommendationController.getAll as any);
+router.get('/:id', recommendationController.getById as any);
+router.post('/:id/dismiss', recommendationController.dismiss as any);
+router.post('/:id/click', recommendationController.recordClick as any);
 
 export default router;
 

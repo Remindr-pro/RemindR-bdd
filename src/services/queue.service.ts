@@ -1,5 +1,5 @@
 import Queue from 'bull';
-import redis from '../config/redis';
+import { logger } from '../config/logger';
 
 const redisConfig = {
   host: process.env.REDIS_HOST || 'localhost',
@@ -41,17 +41,17 @@ try {
     if (process.env.NODE_ENV === 'development') {
       if (error.message && (error.message.includes('ECONNREFUSED') || error.code === 'ECONNREFUSED')) {
         if (!errorLogged) {
-          console.warn('⚠️  Redis not available - queues will not work. Start Redis with: npm run redis:start');
+          logger.warn('Redis not available - queues will not work. Start Redis with: npm run redis:start');
           errorLogged = true;
         }
         return;
       }
       if (!errorLogged) {
-        console.warn('Notification queue error:', error.message || error);
+        logger.warn({ error }, 'Notification queue error');
         errorLogged = true;
       }
     } else {
-      console.error('Notification queue error:', error);
+      logger.error({ error }, 'Notification queue error');
     }
   });
 
@@ -61,35 +61,19 @@ try {
         return;
       }
       if (!errorLogged) {
-        console.warn('Reminder queue error:', error.message || error);
+        logger.warn({ error }, 'Reminder queue error');
       }
     } else {
-      console.error('Reminder queue error:', error);
+      logger.error({ error }, 'Reminder queue error');
     }
   });
 
 } catch (error) {
-  if (process.env.NODE_ENV === 'development') {
-    console.warn('Failed to initialize queues - Redis may not be available');
-  } else {
-    console.error('Failed to initialize queues:', error);
-  }
-  
+  logger.warn({ error }, 'Failed to initialize queues - Redis may not be available');
   notificationQueue = null as any;
   reminderQueue = null as any;
 }
 
-process.on('SIGTERM', async () => {
-  try {
-    if (notificationQueue) await notificationQueue.close().catch(() => {});
-    if (reminderQueue) await reminderQueue.close().catch(() => {});
-    redis.disconnect().catch(() => {});
-  } catch (error) {
-    if (process.env.NODE_ENV !== 'test') {
-      console.error('Error closing queues:', error);
-    }
-  }
-});
 
 export { notificationQueue, reminderQueue };
 

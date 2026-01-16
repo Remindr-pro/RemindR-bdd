@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { errorHandler } from '../../middleware/errorHandler';
 import { ZodError } from 'zod';
+// Prisma uses namespaces which is required for error types
+// eslint-disable-next-line @typescript-eslint/no-namespace
 import { Prisma } from '@prisma/client';
 
 describe('Error Handler Middleware', () => {
@@ -106,7 +108,7 @@ describe('Error Handler Middleware', () => {
 
   it('should handle generic errors', () => {
     const genericError = new Error('Something went wrong');
-    (genericError as any).statusCode = 500;
+    (genericError as Error & { statusCode?: number }).statusCode = 500;
 
     errorHandler(
       genericError,

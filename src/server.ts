@@ -17,6 +17,7 @@ import { logger } from './config/logger';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
 import './services/queue.processors';
+import passport from './config/passport';
 
 dotenv.config();
 
@@ -54,7 +55,6 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-const passport = require('./config/passport').default;
 app.use(passport.initialize());
 
 app.use(requestId);

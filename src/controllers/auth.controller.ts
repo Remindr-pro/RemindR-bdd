@@ -6,6 +6,9 @@ import { AuthRequest } from '../middleware/auth';
 import { UserType } from '@prisma/client';
 import { webhookService } from '../services/webhook.service';
 import { oauth2Config } from '../config/jwt';
+import jwt from 'jsonwebtoken';
+import passport from '../config/passport';
+import { getAppleUserInfo } from '../utils/appleAuth';
 
 export class AuthController {
   async register(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -223,8 +226,7 @@ export class AuthController {
         const token = authHeader.substring(7);
         
         try {
-          const jwt = require('jsonwebtoken');
-          const decoded = jwt.decode(token) as any;
+          const decoded = jwt.decode(token) as { exp?: number } | null;
           
           if (decoded && decoded.exp) {
             const expiresAt = new Date(decoded.exp * 1000);
@@ -302,7 +304,6 @@ export class AuthController {
         return;
       }
 
-      const passport = require('../config/passport').default;
       passport.authenticate('google', {
         scope: ['profile', 'email'],
         state: req.query.redirect_uri as string || undefined,
@@ -322,8 +323,7 @@ export class AuthController {
         return;
       }
 
-      const passport = require('../config/passport').default;
-      passport.authenticate('google', { session: false }, async (err: Error | null, user: any) => {
+      passport.authenticate('google', { session: false }, async (err: Error | null, user: Express.User | undefined) => {
         if (err || !user) {
           res.status(401).json({
             success: false,
@@ -409,10 +409,9 @@ export class AuthController {
         return;
       }
 
-      const { getAppleUserInfo } = require('../utils/appleAuth');
       const appleUserInfo = await getAppleUserInfo(code);
 
-      let email = appleUserInfo.email;
+      const email = appleUserInfo.email;
       let firstName = 'User';
       let lastName = '';
 

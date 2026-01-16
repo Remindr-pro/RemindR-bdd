@@ -1,6 +1,7 @@
 import request from 'supertest';
 import app from '../../server';
 import redis from '../../config/redis';
+import prisma from '../../config/database';
 
 jest.mock('../../config/redis', () => ({
   __esModule: true,
@@ -9,6 +10,18 @@ jest.mock('../../config/redis', () => ({
     setex: jest.fn(),
     keys: jest.fn(),
     del: jest.fn(),
+  },
+}));
+
+jest.mock('../../config/database', () => ({
+  __esModule: true,
+  default: {
+    article: {
+      findMany: jest.fn(),
+    },
+    tokenBlacklist: {
+      findUnique: jest.fn().mockResolvedValue(null),
+    },
   },
 }));
 
@@ -22,6 +35,7 @@ describe('Cache Integration', () => {
   it('should cache GET requests to articles endpoint', async () => {
     (redis.get as jest.Mock).mockResolvedValue(null);
     (redis.setex as jest.Mock).mockResolvedValue('OK');
+    (prisma.article.findMany as jest.Mock).mockResolvedValue([]);
 
     const response1 = await request(app).get('/api/v1/articles');
 
@@ -33,6 +47,7 @@ describe('Cache Integration', () => {
     // Reset mocks for second request
     jest.clearAllMocks();
     (redis.get as jest.Mock).mockResolvedValue(JSON.stringify({ success: true, data: [] }));
+    (prisma.tokenBlacklist.findUnique as jest.Mock).mockResolvedValue(null);
 
     const response2 = await request(app).get('/api/v1/articles');
 

@@ -4,6 +4,7 @@ import { hashPassword, comparePassword } from '../utils/bcrypt';
 import { generateToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { AuthRequest } from '../middleware/auth';
 import { UserType } from '@prisma/client';
+import { PassportUser } from '../config/passport';
 import { webhookService } from '../services/webhook.service';
 import { oauth2Config } from '../config/jwt';
 import jwt from 'jsonwebtoken';
@@ -323,14 +324,16 @@ export class AuthController {
         return;
       }
 
-      passport.authenticate('google', { session: false }, async (err: Error | null, user: Express.User | undefined) => {
-        if (err || !user) {
+      passport.authenticate('google', { session: false }, async (err: Error | null, passportUser: PassportUser | undefined) => {
+        if (err || !passportUser) {
           res.status(401).json({
             success: false,
             message: 'Google authentication failed',
           });
           return;
         }
+
+        const user = passportUser;
 
         if (!user.isActive) {
           res.status(403).json({

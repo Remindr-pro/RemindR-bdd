@@ -2,7 +2,9 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { oauth2Config } from './jwt';
 import prisma from './database';
-import { UserType } from '@prisma/client';
+import { UserType, User } from '@prisma/client';
+
+export type PassportUser = Pick<User, 'id' | 'email' | 'firstName' | 'lastName' | 'role' | 'userType' | 'familyId' | 'isActive'>;
 
 passport.use(
   new GoogleStrategy(
@@ -47,7 +49,7 @@ passport.use(
           }
         }
 
-        return done(null, user);
+        return done(null, user as PassportUser);
       } catch (error) {
         return done(error, undefined);
       }
@@ -71,9 +73,10 @@ passport.deserializeUser(async (id: string, done) => {
         role: true,
         userType: true,
         familyId: true,
+        isActive: true,
       },
     });
-    done(null, user);
+    done(null, user as PassportUser | null);
   } catch (error) {
     done(error, undefined);
   }

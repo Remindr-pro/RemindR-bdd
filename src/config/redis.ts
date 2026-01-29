@@ -1,18 +1,31 @@
 import Redis from 'ioredis';
 import { logger } from './logger';
 
+const redisHost = process.env.REDIS_HOST || 'localhost';
+const redisPort = parseInt(process.env.REDIS_PORT || '6379');
+const redisPassword = process.env.REDIS_PASSWORD || undefined;
+
+// Log Redis config for debugging (without password)
+if (process.env.NODE_ENV === 'production') {
+  logger.info({
+    redisHost,
+    redisPort,
+    hasPassword: !!redisPassword,
+  }, 'Redis configuration loaded');
+}
+
 const redis = process.env.NODE_ENV === 'test'
   ? (new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      password: process.env.REDIS_PASSWORD || undefined,
+      host: redisHost,
+      port: redisPort,
+      password: redisPassword,
       lazyConnect: true,
       enableOfflineQueue: false,
     }) as Redis)
   : new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      password: process.env.REDIS_PASSWORD || undefined,
+      host: redisHost,
+      port: redisPort,
+      password: redisPassword,
       lazyConnect: true,
       enableOfflineQueue: false,
       retryStrategy: (times) => {

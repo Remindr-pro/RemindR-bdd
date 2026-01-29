@@ -17,6 +17,15 @@ const redisConfig = {
   enableReadyCheck: false,
 };
 
+// Log Redis config for debugging (without password)
+if (process.env.NODE_ENV === 'production') {
+  logger.info({
+    redisHost: redisConfig.host,
+    redisPort: redisConfig.port,
+    hasPassword: !!redisConfig.password,
+  }, 'Redis configuration loaded');
+}
+
 let notificationQueue: Queue.Queue | null;
 let reminderQueue: Queue.Queue | null;
 

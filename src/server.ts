@@ -1,7 +1,9 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import { Server } from 'http';
 import { initSentry, captureException } from './config/sentry';
 import { expressErrorHandler } from '@sentry/node';
@@ -19,8 +21,6 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
 import './services/queue.processors';
 import passport from './config/passport';
-
-dotenv.config();
 
 initSentry();
 setupGracefulShutdown();

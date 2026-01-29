@@ -2,14 +2,18 @@ import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { invalidateCache } from '../middleware/cache';
 import { webhookService } from '../services/webhook.service';
+import { Prisma } from '@prisma/client';
 
 export class ArticleController {
   async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { categoryId, published } = req.query;
 
-      const where: any = {};
-      if (categoryId) where.categoryId = categoryId;
+      const where: { categoryId?: string; isPublished?: boolean } = {};
+      if (categoryId) {
+        const categoryIdStr = Array.isArray(categoryId) ? categoryId[0] : typeof categoryId === 'string' ? categoryId : undefined;
+        if (categoryIdStr && typeof categoryIdStr === 'string') where.categoryId = categoryIdStr;
+      }
       if (published !== undefined) where.isPublished = published === 'true';
 
       const articles = await prisma.article.findMany({
@@ -32,9 +36,10 @@ export class ArticleController {
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
 
       const article = await prisma.article.findUnique({
-        where: { id },
+        where: { id: idStr },
         include: {
           category: true,
         },
@@ -60,10 +65,11 @@ export class ArticleController {
   async getByCategory(req: Request, res: Response, next: NextFunction) {
     try {
       const { categoryId } = req.params;
+      const categoryIdStr = Array.isArray(categoryId) ? categoryId[0] : categoryId;
 
       const articles = await prisma.article.findMany({
         where: {
-          categoryId,
+          categoryId: categoryIdStr,
           isPublished: true,
         },
         include: {
@@ -121,10 +127,15 @@ export class ArticleController {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
       const { categoryId, title, content, excerpt, coverImageUrl, readingTimeMinutes, author, targetAudience, seoKeywords, isPublished } = req.body;
 
-      const updateData: any = {};
-      if (categoryId) updateData.categoryId = categoryId;
+      const updateData: Prisma.ArticleUpdateInput = {};
+      if (categoryId) {
+        updateData.category = {
+          connect: { id: typeof categoryId === 'string' ? categoryId : String(categoryId) },
+        };
+      }
       if (title) updateData.title = title;
       if (content) updateData.content = content;
       if (excerpt !== undefined) updateData.excerpt = excerpt;
@@ -139,7 +150,7 @@ export class ArticleController {
       }
 
       const article = await prisma.article.update({
-        where: { id },
+        where: { id: idStr },
         data: updateData,
         include: {
           category: true,
@@ -161,9 +172,10 @@ export class ArticleController {
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
 
       await prisma.article.delete({
-        where: { id },
+        where: { id: idStr },
       });
 
       await invalidateCache('articles');
@@ -180,9 +192,10 @@ export class ArticleController {
   async publish(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
 
       const article = await prisma.article.update({
-        where: { id },
+        where: { id: idStr },
         data: {
           isPublished: true,
           publishedAt: new Date(),

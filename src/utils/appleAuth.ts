@@ -9,6 +9,18 @@ export interface AppleTokenResponse {
   id_token: string;
 }
 
+export interface AppleUserInfo {
+  email?: string;
+  sub: string;
+  email_verified?: boolean;
+}
+
+interface AppleDecodedToken {
+  email?: string;
+  sub: string;
+  email_verified?: boolean;
+}
+
 export const generateAppleClientSecret = (): string => {
   if (!oauth2Config.apple.clientSecret) {
     throw new Error('Apple client secret not configured');
@@ -36,7 +48,7 @@ export const generateAppleClientSecret = (): string => {
   return token;
 };
 
-export const getAppleUserInfo = async (code: string): Promise<any> => {
+export const getAppleUserInfo = async (code: string): Promise<AppleUserInfo> => {
   const clientSecret = generateAppleClientSecret();
 
   const tokenResponse = await fetch('https://appleid.apple.com/auth/token', {
@@ -58,7 +70,11 @@ export const getAppleUserInfo = async (code: string): Promise<any> => {
   }
 
   const tokens = await tokenResponse.json() as AppleTokenResponse;
-  const decoded = jwt.decode(tokens.id_token) as any;
+  const decoded = jwt.decode(tokens.id_token) as AppleDecodedToken | null;
+  
+  if (!decoded || !decoded.sub) {
+    throw new Error('Invalid Apple token');
+  }
 
   return {
     email: decoded.email,

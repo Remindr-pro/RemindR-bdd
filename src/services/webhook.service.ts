@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import prisma from '../config/database';
 import { logger } from '../config/logger';
+import { Prisma } from '@prisma/client';
 
 export interface WebhookPayload {
   event: string;
@@ -37,7 +38,7 @@ export class WebhookService {
     }
   }
 
-  private async sendWebhook(webhook: any, payload: WebhookPayload): Promise<void> {
+  private async sendWebhook(webhook: { id: string; url: string; secret: string | null }, payload: WebhookPayload): Promise<void> {
     try {
       const signature = webhook.secret
         ? this.generateSignature(JSON.stringify(payload), webhook.secret)
@@ -66,7 +67,7 @@ export class WebhookService {
         data: {
           webhookId: webhook.id,
           event: payload.event,
-          payload: payload as any,
+          payload: payload as unknown as Prisma.InputJsonValue,
           responseStatus: response.status,
           responseBody: responseBody.substring(0, 1000), // Limit size
           triggeredAt: new Date(),
@@ -81,13 +82,13 @@ export class WebhookService {
       if (!response.ok) {
         logger.warn({ webhookId: webhook.id, status: response.status }, 'Webhook request failed');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       await prisma.webhookLog.create({
         data: {
           webhookId: webhook.id,
           event: payload.event,
-          payload: payload as any,
-          error: error.message?.substring(0, 500),
+          payload: payload as unknown as Prisma.InputJsonValue,
+          error: error instanceof Error ? error.message.substring(0, 500) : String(error).substring(0, 500),
           triggeredAt: new Date(),
         },
       });

@@ -66,7 +66,7 @@ delete process.env.FCM_PROJECT_ID;
 delete process.env.SENTRY_DSN;
 
 jest.mock('../config/redis', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Redis = require('ioredis');
   const mockRedis = new Redis({
     host: 'localhost',

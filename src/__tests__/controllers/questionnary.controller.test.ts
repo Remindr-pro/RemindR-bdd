@@ -115,7 +115,7 @@ describe('QuestionnaryController', () => {
       (prisma.questionnary.create as jest.Mock).mockResolvedValue(mockCreated);
 
       await controller.create(
-        mockRequest as any,
+        mockRequest as AuthRequest,
         mockResponse as Response,
         nextFunction
       );

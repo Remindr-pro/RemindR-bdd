@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
+import { Prisma } from '@prisma/client';
 
 export class FamilyController {
   async getMyFamily(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
@@ -51,9 +52,10 @@ export class FamilyController {
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
 
       const family = await prisma.family.findUnique({
-        where: { id },
+        where: { id: idStr },
         include: {
           insuranceCompany: true,
           users: {
@@ -90,15 +92,16 @@ export class FamilyController {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
       const { familyName, primaryContactEmail, subscriptionStatus } = req.body;
 
-      const updateData: any = {};
+      const updateData: Prisma.FamilyUpdateInput = {};
       if (familyName !== undefined) updateData.familyName = familyName;
       if (primaryContactEmail !== undefined) updateData.primaryContactEmail = primaryContactEmail;
       if (subscriptionStatus !== undefined) updateData.subscriptionStatus = subscriptionStatus;
 
       const family = await prisma.family.update({
-        where: { id },
+        where: { id: idStr },
         data: updateData,
         include: {
           insuranceCompany: true,

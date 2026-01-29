@@ -1,7 +1,7 @@
 import { ReminderController } from '../../controllers/reminder.controller';
 import prisma from '../../config/database';
 import { AuthRequest } from '../../middleware/auth';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { UserType } from '@prisma/client';
 
 jest.mock('../../config/database', () => ({
@@ -23,7 +23,7 @@ jest.mock('../../config/database', () => ({
 describe('Reminder Integration Tests', () => {
   let reminderController: ReminderController;
   let mockRequest: Partial<AuthRequest>;
-  let mockResponse: any;
+  let mockResponse: Partial<Response>;
   let nextFunction: jest.Mock;
 
   beforeEach(() => {
@@ -40,7 +40,7 @@ describe('Reminder Integration Tests', () => {
       params: {},
     };
     mockResponse = {
-      status: jest.fn().mockReturnThis(),
+      status: jest.fn().mockReturnThis() as Response['status'],
       json: jest.fn().mockReturnThis(),
     };
     nextFunction = jest.fn();
@@ -71,7 +71,7 @@ describe('Reminder Integration Tests', () => {
 
     await reminderController.create(
       mockRequest as AuthRequest,
-      mockResponse,
+      mockResponse as Response,
       nextFunction
     );
 
@@ -82,7 +82,7 @@ describe('Reminder Integration Tests', () => {
 
     await reminderController.getAll(
       mockRequest as AuthRequest,
-      mockResponse,
+      mockResponse as Response,
       nextFunction
     );
 
@@ -97,7 +97,7 @@ describe('Reminder Integration Tests', () => {
 
     await reminderController.getById(
       mockRequest as unknown as Request,
-      mockResponse as any,
+      mockResponse as Response,
       nextFunction
     );
 
@@ -120,7 +120,7 @@ describe('Reminder Integration Tests', () => {
 
     await reminderController.update(
       mockRequest as unknown as Request,
-      mockResponse as any,
+      mockResponse as Response,
       nextFunction
     );
 
@@ -134,7 +134,7 @@ describe('Reminder Integration Tests', () => {
 
     await reminderController.toggleActive(
       mockRequest as unknown as Request,
-      mockResponse as any,
+      mockResponse as Response,
       nextFunction
     );
 

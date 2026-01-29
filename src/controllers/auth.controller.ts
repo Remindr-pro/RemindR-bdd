@@ -211,7 +211,7 @@ export class AuthController {
           refreshToken: newRefreshToken,
         },
       });
-    } catch (error) {
+    } catch {
       res.status(401).json({
         success: false,
         message: 'Invalid refresh token',
@@ -239,11 +239,11 @@ export class AuthController {
                   expiresAt,
                 },
               });
-            } catch (error) {
+            } catch {
               // TokenBlacklist table might not exist yet, ignore
             }
           }
-        } catch (error) {
+        } catch {
           // Ignore token decode errors
         }
       }
@@ -384,7 +384,7 @@ export class AuthController {
       const appleAuthUrl = `https://appleid.apple.com/auth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=email%20name&response_mode=form_post&state=${encodeURIComponent(state)}`;
 
       res.redirect(appleAuthUrl);
-    } catch (error) {
+    } catch {
       res.status(500).json({
         success: false,
         message: 'Failed to initiate Apple authentication',

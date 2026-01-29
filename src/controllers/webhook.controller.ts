@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
+import { Prisma } from '@prisma/client';
 
 export class WebhookController {
   async getAll(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
@@ -34,9 +35,10 @@ export class WebhookController {
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
 
       const webhook = await prisma.webhook.findUnique({
-        where: { id },
+        where: { id: idStr },
         include: {
           webhookLogs: {
             take: 50,
@@ -96,16 +98,17 @@ export class WebhookController {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
       const { url, events, secret, isActive } = req.body;
 
-      const updateData: any = {};
+      const updateData: Prisma.WebhookUpdateInput = {};
       if (url) updateData.url = url;
       if (events) updateData.events = events;
       if (secret !== undefined) updateData.secret = secret || null;
       if (isActive !== undefined) updateData.isActive = isActive;
 
       const webhook = await prisma.webhook.update({
-        where: { id },
+        where: { id: idStr },
         data: updateData,
       });
 
@@ -122,9 +125,10 @@ export class WebhookController {
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
 
       await prisma.webhook.delete({
-        where: { id },
+        where: { id: idStr },
       });
 
       res.json({
@@ -139,10 +143,11 @@ export class WebhookController {
   async getLogs(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
       const limit = parseInt(req.query.limit as string) || 50;
 
       const logs = await prisma.webhookLog.findMany({
-        where: { webhookId: id },
+        where: { webhookId: idStr },
         orderBy: { triggeredAt: 'desc' },
         take: limit,
       });

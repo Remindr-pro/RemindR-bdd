@@ -2,7 +2,7 @@ import request from 'supertest';
 import app from '../../server';
 import prisma from '../../config/database';
 import { generateToken } from '../../utils/jwt';
-import { UserType } from '@prisma/client';
+import { UserType, User } from '@prisma/client';
 
 jest.mock('../../config/database', () => ({
   __esModule: true,
@@ -25,7 +25,7 @@ jest.mock('../../config/database', () => ({
 
 describe('Webhooks Integration', () => {
   let adminToken: string;
-  let adminUser: any;
+  let adminUser: Partial<User>;
 
   beforeAll(async () => {
     adminUser = {
@@ -42,11 +42,11 @@ describe('Webhooks Integration', () => {
     };
 
     adminToken = generateToken({
-      id: adminUser.id,
-      email: adminUser.email,
-      role: adminUser.role,
-      userType: adminUser.userType,
-      familyId: adminUser.familyId,
+      id: adminUser.id!,
+      email: adminUser.email!,
+      role: adminUser.role!,
+      userType: adminUser.userType!,
+      familyId: adminUser.familyId ?? null,
     });
 
     // Mock user lookup for token validation

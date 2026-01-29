@@ -2,6 +2,7 @@ import prisma from '../config/database';
 import { notificationService } from './notification.service';
 import { logger } from '../config/logger';
 import { webhookService } from './webhook.service';
+import { Prisma } from '@prisma/client';
 
 export class ReminderService {
   async processScheduledReminders() {
@@ -33,7 +34,7 @@ export class ReminderService {
     }
   }
 
-  private shouldTrigger(reminder: any, currentTime: string, scheduledTime: string): boolean {
+  private shouldTrigger(reminder: Prisma.ReminderGetPayload<{ include: { user: true } }>, currentTime: string, scheduledTime: string): boolean {
     if (currentTime !== scheduledTime) {
       return false;
     }
@@ -53,7 +54,7 @@ export class ReminderService {
     return true;
   }
 
-  private async triggerReminder(reminder: any) {
+  private async triggerReminder(reminder: Prisma.ReminderGetPayload<{ include: { user: true } }>) {
     try {
       const questionnary = await prisma.questionnary.findUnique({
         where: { userId: reminder.userId },

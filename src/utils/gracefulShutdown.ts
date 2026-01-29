@@ -49,7 +49,12 @@ const shutdown = async (signal: string): Promise<void> => {
   shutdownPromises.push(
     redis.quit().catch((err: Error) => {
       console.error('Error closing Redis connection:', err);
-      return redis.disconnect().catch(() => {});
+      try {
+        redis.disconnect();
+      } catch (disconnectErr) {
+        console.error('Error disconnecting Redis:', disconnectErr);
+      }
+      return Promise.resolve();
     })
   );
 

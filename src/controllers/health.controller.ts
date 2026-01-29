@@ -40,7 +40,7 @@ export const healthCheck = async (_req: Request, res: Response): Promise<void> =
           status: 'up',
           responseTime: Date.now() - dbStart,
         };
-      } catch (error) {
+      } catch {
         healthStatus.services.database = { status: 'down' };
         healthStatus.status = 'unhealthy';
       }
@@ -56,7 +56,7 @@ export const healthCheck = async (_req: Request, res: Response): Promise<void> =
           status: 'up',
           responseTime: Date.now() - redisStart,
         };
-      } catch (error) {
+      } catch {
         healthStatus.services.redis = { status: 'down' };
         if (healthStatus.status === 'healthy') {
           healthStatus.status = 'degraded';

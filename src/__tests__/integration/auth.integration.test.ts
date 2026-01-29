@@ -1,6 +1,7 @@
 import { AuthController } from '../../controllers/auth.controller';
 import prisma from '../../config/database';
 import { hashPassword } from '../../utils/bcrypt';
+import { Request, Response } from 'express';
 
 jest.mock('../../config/database', () => ({
   __esModule: true,
@@ -14,14 +15,15 @@ jest.mock('../../config/database', () => ({
 
 describe('Auth Integration Tests', () => {
   let authController: AuthController;
-  let mockRequest: any;
-  let mockResponse: any;
+  let mockRequest: Partial<Request>;
+  let mockResponse: Partial<Response>;
   let nextFunction: jest.Mock;
 
   beforeEach(() => {
     authController = new AuthController();
     mockRequest = {
       body: {},
+      get: jest.fn(),
     };
     mockResponse = {
       status: jest.fn().mockReturnThis(),
@@ -54,7 +56,7 @@ describe('Auth Integration Tests', () => {
     };
     (prisma.user.create as jest.Mock).mockResolvedValue(createdUser);
 
-    await authController.register(mockRequest, mockResponse, nextFunction);
+    await authController.register(mockRequest as Request, mockResponse as Response, nextFunction);
 
     expect(mockResponse.status).toHaveBeenCalledWith(201);
     expect(mockResponse.json).toHaveBeenCalledWith(
@@ -82,7 +84,7 @@ describe('Auth Integration Tests', () => {
       isActive: true,
     });
 
-    await authController.login(mockRequest, mockResponse, nextFunction);
+    await authController.login(mockRequest as Request, mockResponse as Response, nextFunction);
 
     expect(mockResponse.json).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -115,7 +117,7 @@ describe('Auth Integration Tests', () => {
       email: registerData.email,
     });
 
-    await authController.register(mockRequest, mockResponse, nextFunction);
+    await authController.register(mockRequest as Request, mockResponse as Response, nextFunction);
 
     expect(mockResponse.status).toHaveBeenCalledWith(409);
     expect(mockResponse.json).toHaveBeenCalledWith({

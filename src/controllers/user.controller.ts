@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { webhookService } from '../services/webhook.service';
+import { Prisma } from '@prisma/client';
 
 export class UserController {
   async getAll(_req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
@@ -32,9 +33,10 @@ export class UserController {
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
 
       const user = await prisma.user.findUnique({
-        where: { id },
+        where: { id: idStr },
         select: {
           id: true,
           email: true,
@@ -72,9 +74,10 @@ export class UserController {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
       const { firstName, lastName, phoneNumber, genderActual, profilePictureUrl, userType } = req.body;
 
-      const updateData: any = {};
+      const updateData: Prisma.UserUpdateInput = {};
       if (firstName !== undefined) updateData.firstName = firstName;
       if (lastName !== undefined) updateData.lastName = lastName;
       if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
@@ -83,7 +86,7 @@ export class UserController {
       if (userType !== undefined) updateData.userType = userType;
 
       const user = await prisma.user.update({
-        where: { id },
+        where: { id: idStr },
         data: updateData,
         select: {
           id: true,
@@ -114,11 +117,12 @@ export class UserController {
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
 
-      await webhookService.triggerWebhook('user.deleted', { userId: id });
+      await webhookService.triggerWebhook('user.deleted', { userId: idStr });
 
       await prisma.user.delete({
-        where: { id },
+        where: { id: idStr },
       });
 
       res.json({

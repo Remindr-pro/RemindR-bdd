@@ -44,7 +44,7 @@ export const authenticate = async (
         });
         return;
       }
-    } catch (error) {
+    } catch {
       // TokenBlacklist table might not exist, continue with token verification
     }
 

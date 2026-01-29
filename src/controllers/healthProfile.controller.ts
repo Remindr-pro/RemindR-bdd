@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
+import { Prisma } from '@prisma/client';
 
 export class HealthProfileController {
   async getMyProfile(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
@@ -47,9 +48,10 @@ export class HealthProfileController {
   async getByUserId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { userId } = req.params;
+      const userIdStr = Array.isArray(userId) ? userId[0] : userId;
 
       const profile = await prisma.healthProfile.findUnique({
-        where: { userId },
+        where: { userId: userIdStr },
         include: {
           user: {
             select: {
@@ -109,9 +111,10 @@ export class HealthProfileController {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
       const { bloodType, height, weight, allergies, chronicConditions, medications, preferences } = req.body;
 
-      const updateData: any = {};
+      const updateData: Prisma.HealthProfileUpdateInput = {};
       if (bloodType !== undefined) updateData.bloodType = bloodType;
       if (height !== undefined) updateData.height = parseFloat(height);
       if (weight !== undefined) updateData.weight = parseFloat(weight);
@@ -121,7 +124,7 @@ export class HealthProfileController {
       if (preferences !== undefined) updateData.preferences = preferences;
 
       const profile = await prisma.healthProfile.update({
-        where: { id },
+        where: { id: idStr },
         data: updateData,
       });
 

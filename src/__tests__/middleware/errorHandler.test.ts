@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { errorHandler } from '../../middleware/errorHandler';
 import { ZodError } from 'zod';
 // Prisma uses namespaces which is required for error types
-// eslint-disable-next-line @typescript-eslint/no-namespace
 import { Prisma } from '@prisma/client';
 
 describe('Error Handler Middleware', () => {
@@ -32,10 +31,9 @@ describe('Error Handler Middleware', () => {
       {
         code: 'invalid_type',
         expected: 'string',
-        received: 'number',
         path: ['email'],
         message: 'Expected string, received number',
-      },
+      } as ZodError['issues'][0],
     ]);
 
     errorHandler(

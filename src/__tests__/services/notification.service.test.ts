@@ -78,7 +78,7 @@ describe('NotificationService', () => {
     });
 
     it('should return false if FCM not configured', async () => {
-      (admin.apps as any) = [];
+      (admin as { apps: Array<{ name?: string }> }).apps = [];
 
       const result = await notificationService.sendPushNotification(mockNotificationData);
 
@@ -86,7 +86,7 @@ describe('NotificationService', () => {
     });
 
     it('should handle FCM errors gracefully', async () => {
-      (admin.apps as any) = [{ name: 'default' }];
+      (admin as { apps: Array<{ name?: string }> }).apps = [{ name: 'default' }];
       
       const mockSend = jest.fn().mockRejectedValue(new Error('FCM error'));
       (admin.messaging as jest.Mock).mockReturnValue({

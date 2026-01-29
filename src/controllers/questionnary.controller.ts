@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
+import { Prisma } from '@prisma/client';
 
 export class QuestionnaryController {
   async getMyQuestionnary(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
@@ -110,6 +111,7 @@ export class QuestionnaryController {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
       const {
         step,
         nbPersonsFollowed,
@@ -125,7 +127,7 @@ export class QuestionnaryController {
         enabledNotificationChannels,
       } = req.body;
 
-      const updateData: any = {};
+      const updateData: Prisma.QuestionnaryUpdateInput = {};
       if (step !== undefined) updateData.step = step;
       if (nbPersonsFollowed !== undefined) updateData.nbPersonsFollowed = nbPersonsFollowed;
       if (hasGeneralPractitioner !== undefined) updateData.hasGeneralPractitioner = hasGeneralPractitioner;
@@ -140,7 +142,7 @@ export class QuestionnaryController {
       if (enabledNotificationChannels !== undefined) updateData.enabledNotificationChannels = enabledNotificationChannels;
 
       const questionnary = await prisma.questionnary.update({
-        where: { id },
+        where: { id: idStr },
         data: updateData,
       });
 

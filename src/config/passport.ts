@@ -59,8 +59,9 @@ if (oauth2Config.google.clientId && oauth2Config.google.clientSecret && oauth2Co
   );
 }
 
-passport.serializeUser((user: any, done) => {
-  done(null, user.id);
+passport.serializeUser((user: unknown, done) => {
+  const passportUser = user as PassportUser;
+  done(null, passportUser.id);
 });
 
 passport.deserializeUser(async (id: string, done) => {

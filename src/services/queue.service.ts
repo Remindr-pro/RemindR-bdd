@@ -17,8 +17,8 @@ const redisConfig = {
   enableReadyCheck: false,
 };
 
-let notificationQueue: Queue.Queue;
-let reminderQueue: Queue.Queue;
+let notificationQueue: Queue.Queue | null;
+let reminderQueue: Queue.Queue | null;
 
 try {
   notificationQueue = new Queue('notifications', {
@@ -70,8 +70,8 @@ try {
 
 } catch (error) {
   logger.warn({ error }, 'Failed to initialize queues - Redis may not be available');
-  notificationQueue = null as any;
-  reminderQueue = null as any;
+  notificationQueue = null;
+  reminderQueue = null;
 }
 
 

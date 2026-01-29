@@ -31,7 +31,7 @@ export const cache = (options: CacheOptions = {}) => {
       }
 
       const originalJson = res.json.bind(res);
-      res.json = (body: any) => {
+      res.json = (body: unknown) => {
         redis.setex(cacheKey, ttl, JSON.stringify(body)).catch(() => {
           // Ignore cache errors
         });
@@ -40,7 +40,7 @@ export const cache = (options: CacheOptions = {}) => {
       };
 
       next();
-    } catch (error) {
+    } catch {
       next();
     }
   };
@@ -77,7 +77,7 @@ export const invalidateCache = async (pattern: string): Promise<void> => {
       });
       stream.on('error', reject);
     });
-  } catch (error) {
+  } catch {
     // Ignore cache invalidation errors
   }
 };

@@ -42,9 +42,10 @@ export class NotificationController {
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
 
       const notification = await prisma.notificationLog.findUnique({
-        where: { id },
+        where: { id: idStr },
         include: {
           reminder: true,
           user: {
@@ -78,9 +79,10 @@ export class NotificationController {
   async markAsRead(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
 
       const notification = await prisma.notificationLog.update({
-        where: { id },
+        where: { id: idStr },
         data: {
           clicked: true,
         },

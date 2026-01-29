@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import { Server } from 'http';
 import { initSentry, captureException } from './config/sentry';
 import { expressErrorHandler } from '@sentry/node';
 import { errorHandler } from './middleware/errorHandler';
@@ -82,7 +83,7 @@ app.use((_req, res) => {
 
 app.use(errorHandler);
 
-let server: any = null;
+let server: Server | null = null;
 
 if (process.env.NODE_ENV !== 'test') {
   server = app.listen(PORT, () => {
@@ -92,11 +93,13 @@ if (process.env.NODE_ENV !== 'test') {
       environment: process.env.NODE_ENV,
     }, 'Server started');
     
-    setServer(server);
+    if (server) {
+      setServer(server);
+    }
     startReminderScheduler();
   });
 
-  server.on('error', (error: NodeJS.ErrnoException) => {
+  server.on('error', (error: Error & { code?: string }) => {
     if (error.code === 'EADDRINUSE') {
       logger.error({ port: PORT, code: error.code }, 'Port already in use');
       process.exit(1);

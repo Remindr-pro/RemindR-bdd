@@ -44,9 +44,10 @@ export class RecommendationController {
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
 
       const recommendation = await prisma.recommendation.findUnique({
-        where: { id },
+        where: { id: idStr },
         include: {
           partner: true,
           article: {
@@ -85,9 +86,10 @@ export class RecommendationController {
   async dismiss(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
 
       const recommendation = await prisma.recommendation.update({
-        where: { id },
+        where: { id: idStr },
         data: {
           isDismissed: true,
           dismissedAt: new Date(),
@@ -107,9 +109,10 @@ export class RecommendationController {
   async recordClick(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = Array.isArray(id) ? id[0] : id;
 
       const recommendation = await prisma.recommendation.update({
-        where: { id },
+        where: { id: idStr },
         data: {
           clickedAt: new Date(),
         },

@@ -1,0 +1,93 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: remindr-postgres-prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - remindr-network-prod
+    restart: unless-stopped
+    # Don't expose ports in production - only internal network access
+
+  redis:
+    image: redis:8-alpine
+    container_name: remindr-redis-prod
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data_prod:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - remindr-network-prod
+    restart: unless-stopped
+    # Don't expose ports in production - only internal network access
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: remindr-api-prod
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
+      OAUTH2_GOOGLE_CLIENT_ID: ${OAUTH2_GOOGLE_CLIENT_ID}
+      OAUTH2_GOOGLE_CLIENT_SECRET: ${OAUTH2_GOOGLE_CLIENT_SECRET}
+      OAUTH2_GOOGLE_REDIRECT_URI: ${OAUTH2_GOOGLE_REDIRECT_URI}
+      OAUTH2_APPLE_CLIENT_ID: ${OAUTH2_APPLE_CLIENT_ID}
+      OAUTH2_APPLE_CLIENT_SECRET: ${OAUTH2_APPLE_CLIENT_SECRET}
+      OAUTH2_APPLE_REDIRECT_URI: ${OAUTH2_APPLE_REDIRECT_URI}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
+      FCM_SERVICE_ACCOUNT_PATH: ${FCM_SERVICE_ACCOUNT_PATH}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      SENTRY_DSN: ${SENTRY_DSN}
+      API_VERSION: ${API_VERSION:-v1}
+    ports:
+      - "127.0.0.1:3000:3000"  # Only bind to localhost - nginx will proxy
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - remindr-network-prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  postgres_data_prod:
+  redis_data_prod:
+
+networks:
+  remindr-network-prod:
+    driver: bridge
+

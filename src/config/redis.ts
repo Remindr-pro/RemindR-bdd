@@ -42,7 +42,11 @@ if (process.env.NODE_ENV !== 'test') {
         redisErrorLogged = true;
       }
     } else {
-      if (!redisErrorLogged) {
+      // En production, on log seulement une fois pour éviter le spam
+      if (!redisErrorLogged && (err.code === 'ECONNREFUSED' || err.message?.includes('ECONNREFUSED'))) {
+        logger.warn('Redis not available - queues and cache will not work. Configure REDIS_HOST and REDIS_PORT in environment variables.');
+        redisErrorLogged = true;
+      } else if (!redisErrorLogged) {
         logger.error({ err }, 'Redis connection error');
         redisErrorLogged = true;
       }

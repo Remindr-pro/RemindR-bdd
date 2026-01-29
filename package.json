@@ -37,7 +37,14 @@
     "monitoring:logs": "docker-compose -f docker-compose.monitoring.yml logs -f",
     "generate:secrets": "node scripts/generate-secrets.js",
     "deploy": "node scripts/deploy.js",
-    "env:check": "node scripts/check-env.js"
+    "deploy:prod": "./scripts/deploy-production.sh",
+    "backup:db": "./scripts/backup-db.sh",
+    "env:check": "node scripts/check-env.js",
+    "start:pm2": "pm2 start ecosystem.config.js",
+    "pm2:logs": "pm2 logs remindr-api",
+    "pm2:restart": "pm2 restart remindr-api",
+    "pm2:stop": "pm2 stop remindr-api",
+    "pm2:status": "pm2 status"
   },
   "keywords": [
     "health",

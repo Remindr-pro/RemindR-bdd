@@ -1,65 +1,92 @@
 import Redis from 'ioredis';
 import { logger } from './logger';
 
-const redisHost = process.env.REDIS_HOST || 'localhost';
-const redisPort = parseInt(process.env.REDIS_PORT || '6379');
-const redisPassword = process.env.REDIS_PASSWORD || undefined;
+// Support both REDIS_URL (connection string) and individual REDIS_HOST/PORT/PASSWORD
+let redis: Redis;
 
-// Check if Redis host is Upstash (requires TLS)
-const isUpstash = redisHost.includes('upstash.io') || redisHost.includes('upstash.com');
+if (process.env.REDIS_URL) {
+  // Use connection string if provided (Upstash format: redis://default:TOKEN@HOST:PORT)
+  const redisUrl = process.env.REDIS_URL;
+  const maskedUrl = redisUrl.replace(/:([^:@]+)@/, ':****@'); // Mask password
+  
+  if (process.env.NODE_ENV === 'production') {
+    logger.info({ redisUrl: maskedUrl }, 'Redis configuration: Using REDIS_URL connection string');
+  }
+  
+  redis = new Redis(redisUrl, {
+    lazyConnect: true,
+    enableOfflineQueue: false,
+    maxRetriesPerRequest: 1,
+    connectTimeout: 20000,
+    enableReadyCheck: true,
+    keepAlive: 30000,
+    retryStrategy: (times: number) => {
+      if (times > 10) {
+        return null;
+      }
+      return Math.min(times * 100, 3000);
+    },
+  });
+} else {
+  // Use individual configuration
+  const redisHost = process.env.REDIS_HOST || 'localhost';
+  const redisPort = parseInt(process.env.REDIS_PORT || '6379');
+  const redisPassword = process.env.REDIS_PASSWORD || undefined;
 
-// Log Redis config for debugging (without password)
-if (process.env.NODE_ENV === 'production') {
-  logger.info({
-    redisHost,
-    redisPort,
-    hasPassword: !!redisPassword,
-    isUpstash,
-    tlsEnabled: isUpstash,
-  }, 'Redis configuration loaded');
-}
+  // Check if Redis host is Upstash (requires TLS)
+  const isUpstash = redisHost.includes('upstash.io') || redisHost.includes('upstash.com');
 
-const redisConfig: any = {
-  host: redisHost,
-  port: redisPort,
-  password: redisPassword,
-  lazyConnect: true,
-  enableOfflineQueue: false,
-  retryStrategy: (times: number) => {
-    if (times > 10) {
-      return null; // Stop retrying after 10 attempts
-    }
-    const delay = Math.min(times * 100, 3000);
-    return delay;
-  },
-  maxRetriesPerRequest: 1, // Reduce retries to avoid timeout errors
-  connectTimeout: 20000, // Increased timeout for external services
-  enableReadyCheck: true,
-  keepAlive: 30000,
-  family: 4, // Force IPv4
-};
+  // Log Redis config for debugging (without password)
+  if (process.env.NODE_ENV === 'production') {
+    logger.info({
+      redisHost,
+      redisPort,
+      hasPassword: !!redisPassword,
+      isUpstash,
+      tlsEnabled: isUpstash && redisPort === 6380,
+    }, 'Redis configuration: Using individual REDIS_HOST/PORT/PASSWORD');
+  }
 
-// Add TLS for Upstash - but check if port indicates TLS
-// Upstash uses port 6380 for TLS, 6379 for non-TLS
-if (isUpstash && redisPort === 6380) {
-  redisConfig.tls = {
-    rejectUnauthorized: false, // Upstash uses self-signed certificates
+  const redisConfig: any = {
+    host: redisHost,
+    port: redisPort,
+    password: redisPassword,
+    lazyConnect: true,
+    enableOfflineQueue: false,
+    retryStrategy: (times: number) => {
+      if (times > 10) {
+        return null; // Stop retrying after 10 attempts
+      }
+      const delay = Math.min(times * 100, 3000);
+      return delay;
+    },
+    maxRetriesPerRequest: 1, // Reduce retries to avoid timeout errors
+    connectTimeout: 20000, // Increased timeout for external services
+    enableReadyCheck: true,
+    keepAlive: 30000,
+    family: 4, // Force IPv4
   };
-} else if (isUpstash && redisPort === 6379) {
-  // Port 6379 on Upstash might not need TLS
-  // Try without TLS first
-  logger.warn('Upstash detected but port is 6379 - trying without TLS');
-}
 
-const redis = process.env.NODE_ENV === 'test'
-  ? (new Redis({
-      host: redisHost,
-      port: redisPort,
-      password: redisPassword,
-      lazyConnect: true,
-      enableOfflineQueue: false,
-    }) as Redis)
-  : new Redis(redisConfig);
+  // Add TLS for Upstash - port 6380 requires TLS, 6379 might not
+  if (isUpstash && redisPort === 6380) {
+    redisConfig.tls = {
+      rejectUnauthorized: false, // Upstash uses self-signed certificates
+    };
+  } else if (isUpstash && redisPort === 6379) {
+    // Port 6379 on Upstash might not need TLS, but try with TLS if connection fails
+    logger.warn('Upstash detected but port is 6379 - trying without TLS first');
+  }
+
+  redis = process.env.NODE_ENV === 'test'
+    ? (new Redis({
+        host: redisHost,
+        port: redisPort,
+        password: redisPassword,
+        lazyConnect: true,
+        enableOfflineQueue: false,
+      }) as Redis)
+    : new Redis(redisConfig);
+}
 
 if (process.env.NODE_ENV !== 'test') {
   let redisErrorLogged = false;

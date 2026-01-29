@@ -90,7 +90,7 @@ export class NotificationService {
 
       const msg = {
         to: data.email,
-        from: process.env.SENDGRID_FROM_EMAIL || 'noreply@remindr.app',
+        from: process.env.SENDGRID_FROM_EMAIL || 'noreply@remind-r.com',
         subject: data.title,
         text: data.message,
         html: `<p>${data.message}</p>`,

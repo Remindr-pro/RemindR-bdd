@@ -26,13 +26,13 @@ async function main() {
 
   const adminPassword = await hashPassword('admin123');
   await prisma.user.upsert({
-    where: { email: 'admin@remindr.app' },
+    where: { email: 'admin@remind-r.com' },
     update: {
       userType: UserType.ADMIN,
       role: 'admin',
     },
     create: {
-      email: 'admin@remindr.app',
+      email: 'admin@remind-r.com',
       passwordHash: adminPassword,
       firstName: 'Admin',
       lastName: 'User',
@@ -45,12 +45,12 @@ async function main() {
 
   const userPassword = await hashPassword('user123');
   const user = await prisma.user.upsert({
-    where: { email: 'user@remindr.app' },
+    where: { email: 'user@remind-r.com' },
     update: {
       userType: UserType.INDIVIDUAL,
     },
     create: {
-      email: 'user@remindr.app',
+      email: 'user@remind-r.com',
       passwordHash: userPassword,
       firstName: 'John',
       lastName: 'Doe',
@@ -171,8 +171,8 @@ async function main() {
   });
 
   console.log('✅ Seeding completed!');
-  console.log(`📧 Admin: admin@remindr.app / admin123`);
-  console.log(`📧 User: user@remindr.app / user123`);
+  console.log(`📧 Admin: admin@remind-r.com / admin123`);
+  console.log(`📧 User: user@remind-r.com / user123`);
 }
 
 main()

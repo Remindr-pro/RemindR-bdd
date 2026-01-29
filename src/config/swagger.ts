@@ -9,7 +9,7 @@ const options: swaggerJsdoc.Options = {
       description: 'API Backend for RemindR health application',
       contact: {
         name: 'RemindR Support',
-        email: 'support@remindr.app',
+        email: 'contact@remind-r.com',
       },
     },
     servers: [
@@ -18,7 +18,7 @@ const options: swaggerJsdoc.Options = {
         description: 'Development server',
       },
       {
-        url: 'https://api.remindr.app',
+        url: 'https://api.remind-r.com',
         description: 'Production server',
       },
     ],

@@ -8,7 +8,7 @@ const redisConfig: any = {
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
   password: process.env.REDIS_PASSWORD || undefined,
-  maxRetriesPerRequest: null, // Disable max retries for external services
+  maxRetriesPerRequest: 1, // Reduce retries to avoid timeout errors
   retryStrategy: (times: number) => {
     if (times > 10) {
       return null; // Stop retrying after 10 attempts

@@ -32,7 +32,7 @@ const redisConfig: any = {
     const delay = Math.min(times * 100, 3000);
     return delay;
   },
-  maxRetriesPerRequest: null, // Disable max retries for external services
+  maxRetriesPerRequest: 1, // Reduce retries to avoid timeout errors
   connectTimeout: 20000, // Increased timeout for external services
   enableReadyCheck: true,
   keepAlive: 30000,

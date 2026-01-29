@@ -44,7 +44,12 @@
     "pm2:logs": "pm2 logs remindr-api",
     "pm2:restart": "pm2 restart remindr-api",
     "pm2:stop": "pm2 stop remindr-api",
-    "pm2:status": "pm2 status"
+    "pm2:status": "pm2 status",
+    "clean": "node scripts/clean.js",
+    "clean:all": "node scripts/clean.js --all && npm cache clean --force",
+    "clean:build": "node scripts/clean.js",
+    "clean:cache": "node scripts/clean.js",
+    "clean:prisma": "node scripts/clean.js"
   },
   "keywords": [
     "health",

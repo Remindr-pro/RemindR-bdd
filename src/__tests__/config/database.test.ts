@@ -1,3 +1,34 @@
+jest.mock('../../config/database', () => {
+  const mockPrisma = {
+    user: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    reminder: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    healthProfile: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    $disconnect: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: mockPrisma,
+  };
+});
+
 import prisma from '../../config/database';
 
 describe('Database Configuration', () => {

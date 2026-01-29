@@ -31,7 +31,7 @@ describe('Auth Schemas Validation', () => {
       const result = registerSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].path).toContain('email');
+        expect(result.error.issues[0].path).toContain('email');
       }
     });
 
@@ -49,7 +49,7 @@ describe('Auth Schemas Validation', () => {
       const result = registerSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].path).toContain('password');
+        expect(result.error.issues[0].path).toContain('password');
       }
     });
 

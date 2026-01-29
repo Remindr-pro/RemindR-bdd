@@ -9,7 +9,7 @@ export const createHealthProfileSchema = z.object({
     allergies: z.array(z.string()).optional(),
     chronicConditions: z.array(z.string()).optional(),
     medications: z.array(z.string()).optional(),
-    preferences: z.record(z.any()).optional(),
+    preferences: z.record(z.string(), z.any()).optional(),
   }),
 });
 
@@ -24,7 +24,7 @@ export const updateHealthProfileSchema = z.object({
     allergies: z.array(z.string()).optional(),
     chronicConditions: z.array(z.string()).optional(),
     medications: z.array(z.string()).optional(),
-    preferences: z.record(z.any()).optional(),
+    preferences: z.record(z.string(), z.any()).optional(),
   }),
 });
 

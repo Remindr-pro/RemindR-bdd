@@ -5,13 +5,41 @@ const redisHost = process.env.REDIS_HOST || 'localhost';
 const redisPort = parseInt(process.env.REDIS_PORT || '6379');
 const redisPassword = process.env.REDIS_PASSWORD || undefined;
 
+// Check if Redis host is Upstash (requires TLS)
+const isUpstash = redisHost.includes('upstash.io') || redisHost.includes('upstash.com');
+
 // Log Redis config for debugging (without password)
 if (process.env.NODE_ENV === 'production') {
   logger.info({
     redisHost,
     redisPort,
     hasPassword: !!redisPassword,
+    isUpstash,
+    tlsEnabled: isUpstash,
   }, 'Redis configuration loaded');
+}
+
+const redisConfig: any = {
+  host: redisHost,
+  port: redisPort,
+  password: redisPassword,
+  lazyConnect: true,
+  enableOfflineQueue: false,
+  retryStrategy: (times: number) => {
+    if (process.env.NODE_ENV === 'development' && times > 3) {
+      return null;
+    }
+    const delay = Math.min(times * 50, 2000);
+    return delay;
+  },
+  maxRetriesPerRequest: process.env.NODE_ENV === 'development' ? 1 : 3,
+  connectTimeout: 10000, // Increased timeout for external services
+  enableReadyCheck: false,
+};
+
+// Add TLS for Upstash
+if (isUpstash) {
+  redisConfig.tls = {};
 }
 
 const redis = process.env.NODE_ENV === 'test'
@@ -22,23 +50,7 @@ const redis = process.env.NODE_ENV === 'test'
       lazyConnect: true,
       enableOfflineQueue: false,
     }) as Redis)
-  : new Redis({
-      host: redisHost,
-      port: redisPort,
-      password: redisPassword,
-      lazyConnect: true,
-      enableOfflineQueue: false,
-      retryStrategy: (times) => {
-        if (process.env.NODE_ENV === 'development' && times > 3) {
-          return null;
-        }
-        const delay = Math.min(times * 50, 2000);
-        return delay;
-      },
-      maxRetriesPerRequest: process.env.NODE_ENV === 'development' ? 1 : 3,
-      connectTimeout: 5000,
-      enableReadyCheck: false,
-    });
+  : new Redis(redisConfig);
 
 if (process.env.NODE_ENV !== 'test') {
   let redisErrorLogged = false;

@@ -1,7 +1,10 @@
 import Queue from 'bull';
 import { logger } from '../config/logger';
 
-const redisConfig = {
+// Check if Redis host is Upstash (requires TLS)
+const isUpstash = process.env.REDIS_HOST?.includes('upstash.io') || process.env.REDIS_HOST?.includes('upstash.com');
+
+const redisConfig: any = {
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
   password: process.env.REDIS_PASSWORD || undefined,
@@ -13,9 +16,14 @@ const redisConfig = {
     const delay = Math.min(times * 50, 2000);
     return delay;
   },
-  connectTimeout: 5000,
+  connectTimeout: 10000, // Increased timeout for external services
   enableReadyCheck: false,
 };
+
+// Add TLS for Upstash
+if (isUpstash) {
+  redisConfig.tls = {};
+}
 
 // Log Redis config for debugging (without password)
 if (process.env.NODE_ENV === 'production') {

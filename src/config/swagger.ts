@@ -41,6 +41,7 @@ const options: swaggerJsdoc.Options = {
       { name: 'Notifications', description: 'Notification logs' },
       { name: 'Questionnaire', description: 'User questionnaire' },
       { name: 'Families', description: 'Family management' },
+      { name: 'Webhooks', description: 'Webhook management (Admin only)' },
     ],
   },
   apis: ['./src/routes/*.ts', './src/routes/*.swagger.ts', './src/controllers/*.ts'],

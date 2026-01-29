@@ -207,3 +207,60 @@
  *         description: Article not found
  */
 
+/**
+ * @swagger
+ * /api/v1/articles/category/{categoryId}:
+ *   get:
+ *     summary: Get articles by category
+ *     tags: [Articles]
+ *     parameters:
+ *       - in: path
+ *         name: categoryId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: List of articles in category
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Article'
+ *       404:
+ *         description: Category not found
+ */
+
+/**
+ * @swagger
+ * /api/v1/articles/{id}/publish:
+ *   patch:
+ *     summary: Publish article (Admin/Professional only)
+ *     tags: [Articles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Article published successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Article not found
+ */
+

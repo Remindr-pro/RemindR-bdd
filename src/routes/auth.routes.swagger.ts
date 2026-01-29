@@ -265,3 +265,102 @@
  *                   type: string
  */
 
+/**
+ * @swagger
+ * /api/v1/auth/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     token:
+ *                       type: string
+ *                     refreshToken:
+ *                       type: string
+ *       401:
+ *         description: Invalid refresh token
+ */
+
+/**
+ * @swagger
+ * /api/v1/auth/google:
+ *   get:
+ *     summary: Initiate Google OAuth authentication
+ *     tags: [Auth]
+ *     responses:
+ *       302:
+ *         description: Redirect to Google OAuth
+ */
+
+/**
+ * @swagger
+ * /api/v1/auth/google/callback:
+ *   get:
+ *     summary: Google OAuth callback
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: query
+ *         name: code
+ *         schema:
+ *           type: string
+ *         description: OAuth authorization code
+ *     responses:
+ *       200:
+ *         description: Authentication successful
+ *       401:
+ *         description: Authentication failed
+ */
+
+/**
+ * @swagger
+ * /api/v1/auth/apple:
+ *   get:
+ *     summary: Initiate Apple OAuth authentication
+ *     tags: [Auth]
+ *     responses:
+ *       302:
+ *         description: Redirect to Apple OAuth
+ */
+
+/**
+ * @swagger
+ * /api/v1/auth/apple/callback:
+ *   get:
+ *     summary: Apple OAuth callback
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: query
+ *         name: code
+ *         schema:
+ *           type: string
+ *         description: OAuth authorization code
+ *     responses:
+ *       200:
+ *         description: Authentication successful
+ *       401:
+ *         description: Authentication failed
+ */
+

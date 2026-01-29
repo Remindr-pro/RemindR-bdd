@@ -49,6 +49,8 @@ jobs:
 
       - name: Generate Prisma Client
         run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://remindr:remindr_password@localhost:5432/remindr_test?schema=public
 
       - name: Run migrations
         run: npx prisma migrate deploy
@@ -84,6 +86,8 @@ jobs:
 
       - name: Generate Prisma Client
         run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/db
 
       - name: Build
         run: npm run build

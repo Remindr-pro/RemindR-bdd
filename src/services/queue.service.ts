@@ -8,21 +8,31 @@ const redisConfig: any = {
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
   password: process.env.REDIS_PASSWORD || undefined,
-  maxRetriesPerRequest: process.env.NODE_ENV === 'development' ? 1 : 3,
+  maxRetriesPerRequest: null, // Disable max retries for external services
   retryStrategy: (times: number) => {
-    if (process.env.NODE_ENV === 'development' && times > 3) {
-      return null;
+    if (times > 10) {
+      return null; // Stop retrying after 10 attempts
     }
-    const delay = Math.min(times * 50, 2000);
+    const delay = Math.min(times * 100, 3000);
     return delay;
   },
-  connectTimeout: 10000, // Increased timeout for external services
-  enableReadyCheck: false,
+  connectTimeout: 20000, // Increased timeout for external services
+  enableReadyCheck: true,
+  keepAlive: 30000,
+  family: 4, // Force IPv4
+  enableOfflineQueue: false,
 };
 
-// Add TLS for Upstash
-if (isUpstash) {
-  redisConfig.tls = {};
+// Add TLS for Upstash - but check if port indicates TLS
+// Upstash uses port 6380 for TLS, 6379 for non-TLS
+if (isUpstash && redisConfig.port === 6380) {
+  redisConfig.tls = {
+    rejectUnauthorized: false, // Upstash uses self-signed certificates
+  };
+} else if (isUpstash && redisConfig.port === 6379) {
+  // Port 6379 on Upstash might not need TLS
+  // Try without TLS first
+  logger.warn('Upstash detected but port is 6379 - trying without TLS');
 }
 
 // Log Redis config for debugging (without password)

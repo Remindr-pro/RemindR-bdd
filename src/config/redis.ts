@@ -26,20 +26,29 @@ const redisConfig: any = {
   lazyConnect: true,
   enableOfflineQueue: false,
   retryStrategy: (times: number) => {
-    if (process.env.NODE_ENV === 'development' && times > 3) {
-      return null;
+    if (times > 10) {
+      return null; // Stop retrying after 10 attempts
     }
-    const delay = Math.min(times * 50, 2000);
+    const delay = Math.min(times * 100, 3000);
     return delay;
   },
-  maxRetriesPerRequest: process.env.NODE_ENV === 'development' ? 1 : 3,
-  connectTimeout: 10000, // Increased timeout for external services
-  enableReadyCheck: false,
+  maxRetriesPerRequest: null, // Disable max retries for external services
+  connectTimeout: 20000, // Increased timeout for external services
+  enableReadyCheck: true,
+  keepAlive: 30000,
+  family: 4, // Force IPv4
 };
 
-// Add TLS for Upstash
-if (isUpstash) {
-  redisConfig.tls = {};
+// Add TLS for Upstash - but check if port indicates TLS
+// Upstash uses port 6380 for TLS, 6379 for non-TLS
+if (isUpstash && redisPort === 6380) {
+  redisConfig.tls = {
+    rejectUnauthorized: false, // Upstash uses self-signed certificates
+  };
+} else if (isUpstash && redisPort === 6379) {
+  // Port 6379 on Upstash might not need TLS
+  // Try without TLS first
+  logger.warn('Upstash detected but port is 6379 - trying without TLS');
 }
 
 const redis = process.env.NODE_ENV === 'test'

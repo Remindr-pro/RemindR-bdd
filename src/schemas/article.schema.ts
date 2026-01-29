@@ -9,7 +9,7 @@ export const createArticleSchema = z.object({
     coverImageUrl: z.string().url().optional(),
     readingTimeMinutes: z.number().int().positive().optional(),
     author: z.string().optional(),
-    targetAudience: z.record(z.any()).optional(),
+    targetAudience: z.record(z.string(), z.any()).optional(),
     seoKeywords: z.array(z.string()).optional(),
   }),
 });
@@ -26,7 +26,7 @@ export const updateArticleSchema = z.object({
     coverImageUrl: z.string().url().optional(),
     readingTimeMinutes: z.number().int().positive().optional(),
     author: z.string().optional(),
-    targetAudience: z.record(z.any()).optional(),
+    targetAudience: z.record(z.string(), z.any()).optional(),
     seoKeywords: z.array(z.string()).optional(),
     isPublished: z.boolean().optional(),
   }),

@@ -62,6 +62,17 @@ if (process.env.NODE_ENV === 'production') {
 // Create Prisma client
 // Prisma will read DATABASE_URL from process.env automatically
 // We ensure it's loaded via dotenv.config() above
+
+// Force DATABASE_URL in process.env before creating PrismaClient
+if (dbUrl) {
+  process.env.DATABASE_URL = dbUrl;
+  
+  // Log what Prisma will use
+  if (process.env.NODE_ENV === 'production') {
+    console.log('🔧 Prisma utilisera DATABASE_URL:', dbUrl.replace(/:([^:@]+)@/, ':****@'));
+  }
+}
+
 const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
 });

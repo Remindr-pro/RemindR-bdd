@@ -55,62 +55,77 @@ if (process.env.REDIS_URL) {
   }
 }
 
-let notificationQueue: Queue.Queue | null;
-let reminderQueue: Queue.Queue | null;
+let notificationQueue: Queue.Queue | null = null;
+let reminderQueue: Queue.Queue | null = null;
+let queueErrorLogged = false;
 
-try {
-  notificationQueue = new Queue('notifications', {
-    redis: redisConfig,
-    settings: {
-      maxStalledCount: 0,
-    },
-  });
+// Initialize queues with error handling
+const initializeQueues = () => {
+  try {
+    notificationQueue = new Queue('notifications', {
+      redis: redisConfig,
+      settings: {
+        maxStalledCount: 0,
+      },
+    });
 
-  reminderQueue = new Queue('reminders', {
-    redis: redisConfig,
-    settings: {
-      maxStalledCount: 0,
-    },
-  });
+    reminderQueue = new Queue('reminders', {
+      redis: redisConfig,
+      settings: {
+        maxStalledCount: 0,
+      },
+    });
 
-  let errorLogged = false;
+    // Error handlers - log only once to avoid spam
+    notificationQueue.on('error', (error: Error & { code?: string }) => {
+      const isConnectionError = error.code === 'ECONNREFUSED' || 
+                                error.code === 'ETIMEDOUT' ||
+                                error.message?.includes('ECONNREFUSED') ||
+                                error.message?.includes('ETIMEDOUT');
+      
+      if (isConnectionError && !queueErrorLogged) {
+        logger.warn({ 
+          code: error.code,
+          message: error.message 
+        }, 'Redis connection failed - queues disabled. Application will run in degraded mode.');
+        queueErrorLogged = true;
+      } else if (!isConnectionError && !queueErrorLogged) {
+        logger.error({ error }, 'Notification queue error');
+        queueErrorLogged = true;
+      }
+    });
 
-  notificationQueue.on('error', (error: Error & { code?: string }) => {
-    if (process.env.NODE_ENV === 'development') {
-      if (error.message && (error.message.includes('ECONNREFUSED') || error.code === 'ECONNREFUSED')) {
-        if (!errorLogged) {
-          logger.warn('Redis not available - queues will not work. Start Redis with: npm run redis:start');
-          errorLogged = true;
-        }
+    reminderQueue.on('error', (error: Error & { code?: string }) => {
+      const isConnectionError = error.code === 'ECONNREFUSED' || 
+                                error.code === 'ETIMEDOUT' ||
+                                error.message?.includes('ECONNREFUSED') ||
+                                error.message?.includes('ETIMEDOUT');
+      
+      if (isConnectionError && !queueErrorLogged) {
+        // Already logged by notificationQueue
         return;
+      } else if (!isConnectionError && !queueErrorLogged) {
+        logger.error({ error }, 'Reminder queue error');
+        queueErrorLogged = true;
       }
-      if (!errorLogged) {
-        logger.warn({ error }, 'Notification queue error');
-        errorLogged = true;
-      }
-    } else {
-      logger.error({ error }, 'Notification queue error');
-    }
-  });
+    });
 
-  reminderQueue.on('error', (error: Error & { code?: string }) => {
-    if (process.env.NODE_ENV === 'development') {
-      if (error.message && (error.message.includes('ECONNREFUSED') || error.code === 'ECONNREFUSED')) {
-        return;
+    // Log successful connection
+    notificationQueue.on('ready', () => {
+      if (!queueErrorLogged) {
+        logger.info('Redis queues initialized successfully');
       }
-      if (!errorLogged) {
-        logger.warn({ error }, 'Reminder queue error');
-      }
-    } else {
-      logger.error({ error }, 'Reminder queue error');
-    }
-  });
+    });
 
-} catch (error) {
-  logger.warn({ error }, 'Failed to initialize queues - Redis may not be available');
-  notificationQueue = null;
-  reminderQueue = null;
-}
+  } catch (error) {
+    logger.warn({ error }, 'Failed to initialize queues - Redis may not be available. Application will run in degraded mode.');
+    notificationQueue = null;
+    reminderQueue = null;
+  }
+};
+
+// Initialize queues
+initializeQueues();
 
 
 export { notificationQueue, reminderQueue };

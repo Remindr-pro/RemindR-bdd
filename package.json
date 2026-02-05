@@ -12,6 +12,7 @@
     "prisma:generate": "prisma generate",
     "prisma:regenerate": "node scripts/regenerate-prisma.js",
     "prisma:force-regenerate": "node scripts/force-prisma-regenerate.js",
+    "test:db": "node scripts/test-db-connection.js",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",

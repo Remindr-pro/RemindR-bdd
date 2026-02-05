@@ -32,7 +32,8 @@ if (process.env.REDIS_URL) {
     connectTimeout: 20000, // Increased timeout for external services
     keepAlive: 30000,
     family: 4, // Force IPv4
-    enableOfflineQueue: false,
+    enableOfflineQueue: true, // Allow commands when not connected (Bull needs this)
+    lazyConnect: true, // Don't connect immediately
   };
 
   // Add TLS for Upstash - port 6380 requires TLS, 6379 might not
@@ -81,7 +82,8 @@ const initializeQueues = () => {
       const isConnectionError = error.code === 'ECONNREFUSED' || 
                                 error.code === 'ETIMEDOUT' ||
                                 error.message?.includes('ECONNREFUSED') ||
-                                error.message?.includes('ETIMEDOUT');
+                                error.message?.includes('ETIMEDOUT') ||
+                                error.message?.includes('Stream isn\'t writeable');
       
       if (isConnectionError && !queueErrorLogged) {
         logger.warn({ 
@@ -99,7 +101,8 @@ const initializeQueues = () => {
       const isConnectionError = error.code === 'ECONNREFUSED' || 
                                 error.code === 'ETIMEDOUT' ||
                                 error.message?.includes('ECONNREFUSED') ||
-                                error.message?.includes('ETIMEDOUT');
+                                error.message?.includes('ETIMEDOUT') ||
+                                error.message?.includes('Stream isn\'t writeable');
       
       if (isConnectionError && !queueErrorLogged) {
         // Already logged by notificationQueue

@@ -1,25 +1,47 @@
 import { PrismaClient } from '@prisma/client';
 import { logger } from './logger';
 import dotenv from 'dotenv';
+import { resolve } from 'node:path';
 
-// Ensure dotenv is loaded before Prisma
-dotenv.config();
+// Load .env file explicitly with absolute path
+const envPath = resolve(process.cwd(), '.env');
+const envResult = dotenv.config({ path: envPath });
+
+if (envResult.error && process.env.NODE_ENV === 'production') {
+  console.error('❌ ERREUR: Impossible de charger le fichier .env:', envResult.error.message);
+  console.error('📁 Chemin recherché:', envPath);
+  console.error('📁 Répertoire de travail:', process.cwd());
+}
+
+// Force DATABASE_URL to be set from .env
+const dbUrl = process.env.DATABASE_URL;
+if (!dbUrl) {
+  console.error('❌ ERREUR: DATABASE_URL n\'est pas défini dans le .env');
+}
 
 // Log DATABASE_URL (masked) for debugging in production
 if (process.env.NODE_ENV === 'production') {
-  const dbUrl = process.env.DATABASE_URL || '';
-  const maskedUrl = dbUrl.replace(/:[^:@]+@/, ':****@');
+  const maskedUrl = dbUrl ? dbUrl.replace(/:[^:@]+@/, ':****@') : 'NON DÉFINI';
+  console.log('📊 DATABASE_URL chargé:', maskedUrl);
+  console.log('📊 DATABASE_URL contient "supabase":', dbUrl?.includes('supabase') || false);
+  console.log('📊 DATABASE_URL contient "postgres:5432":', dbUrl?.includes('postgres:5432') || false);
+  
   logger.info({ 
     databaseUrl: maskedUrl,
-    hasDatabaseUrl: !!process.env.DATABASE_URL 
+    hasDatabaseUrl: !!dbUrl,
+    envPath: envPath,
+    cwd: process.cwd()
   }, 'Database configuration loaded');
   
   // Warn if DATABASE_URL looks like Docker hostname
-  if (dbUrl.includes('postgres:5432') || dbUrl.includes('localhost:5432')) {
-    logger.warn('⚠️  DATABASE_URL appears to point to localhost/Docker. Verify your .env file contains the correct Supabase URL.');
+  if (dbUrl && (dbUrl.includes('postgres:5432') || dbUrl.includes('localhost:5432')) && !dbUrl.includes('supabase')) {
+    logger.warn('⚠️  DATABASE_URL semble pointer vers Docker/localhost. Vérifiez que votre .env contient bien l\'URL Supabase.');
   }
 }
 
+// Create Prisma client
+// Prisma will read DATABASE_URL from process.env automatically
+// We ensure it's loaded via dotenv.config() above
 const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
 });

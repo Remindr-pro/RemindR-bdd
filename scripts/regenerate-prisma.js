@@ -35,14 +35,33 @@ try {
     fs.rmSync(prismaClientPath, { recursive: true, force: true });
   }
 
-  // Régénérer le client Prisma
+  // Supprimer aussi le cache Prisma dans node_modules/@prisma/client
+  const prismaClientCachePath = path.join(__dirname, '..', 'node_modules', '@prisma', 'client');
+  if (fs.existsSync(prismaClientCachePath)) {
+    console.log('🗑️  Nettoyage du cache Prisma Client...');
+    // On ne supprime pas tout, juste les fichiers générés
+    const generatedPath = path.join(prismaClientCachePath, '.prisma');
+    if (fs.existsSync(generatedPath)) {
+      fs.rmSync(generatedPath, { recursive: true, force: true });
+    }
+  }
+
+  // Régénérer le client Prisma avec la bonne DATABASE_URL
   console.log('🔧 Génération du nouveau client Prisma...');
+  console.log('   DATABASE_URL sera:', maskedUrl);
+  
+  // Forcer l'utilisation de la bonne DATABASE_URL
+  const env = { ...process.env };
+  env.DATABASE_URL = dbUrl;
+  
   execSync('npx prisma generate', { 
     stdio: 'inherit',
-    env: { ...process.env, DATABASE_URL: dbUrl }
+    env: env,
+    cwd: path.join(__dirname, '..')
   });
 
   console.log('✅ Client Prisma régénéré avec succès!');
+  console.log('⚠️  IMPORTANT: Redémarrez l\'application pour que les changements prennent effet');
 } catch (error) {
   console.error('❌ Erreur lors de la régénération:', error.message);
   process.exit(1);

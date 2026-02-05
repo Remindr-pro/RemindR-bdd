@@ -65,11 +65,23 @@ if (process.env.NODE_ENV === 'production') {
 
 // Force DATABASE_URL in process.env before creating PrismaClient
 if (dbUrl) {
-  process.env.DATABASE_URL = dbUrl;
+  // Add SSL mode for Supabase if not already present
+  let finalDbUrl = dbUrl;
+  if (dbUrl.includes('supabase') && !dbUrl.includes('sslmode=')) {
+    // Supabase requires SSL for external connections
+    const separator = dbUrl.includes('?') ? '&' : '?';
+    finalDbUrl = `${dbUrl}${separator}sslmode=require`;
+    
+    if (process.env.NODE_ENV === 'production') {
+      console.log('🔒 SSL ajouté à DATABASE_URL pour Supabase');
+    }
+  }
+  
+  process.env.DATABASE_URL = finalDbUrl;
   
   // Log what Prisma will use
   if (process.env.NODE_ENV === 'production') {
-    console.log('🔧 Prisma utilisera DATABASE_URL:', dbUrl.replace(/:([^:@]+)@/, ':****@'));
+    console.log('🔧 Prisma utilisera DATABASE_URL:', finalDbUrl.replace(/:([^:@]+)@/, ':****@'));
   }
 }
 

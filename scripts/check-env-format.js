@@ -57,6 +57,12 @@ lines.forEach((line, index) => {
         if (!value.includes('supabase')) {
           console.log('   ⚠️  DATABASE_URL ne contient pas "supabase"');
         }
+        
+        // Check for SSL mode for Supabase
+        if (value.includes('supabase') && !value.includes('sslmode=')) {
+          console.log('   ℹ️  DATABASE_URL Supabase sans sslmode - SSL sera ajouté automatiquement');
+          console.log('   💡 Vous pouvez aussi l\'ajouter manuellement: ?sslmode=require');
+        }
       }
     }
   }

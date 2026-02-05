@@ -20,7 +20,8 @@ if (process.env.REDIS_URL) {
     host: redisHost,
     port: redisPort,
     password: redisPassword,
-    maxRetriesPerRequest: 1, // Reduce retries to avoid timeout errors
+    // Bull.js doesn't allow enableReadyCheck or maxRetriesPerRequest in config
+    // These options are handled by Bull internally
     retryStrategy: (times: number) => {
       if (times > 10) {
         return null; // Stop retrying after 10 attempts
@@ -29,7 +30,6 @@ if (process.env.REDIS_URL) {
       return delay;
     },
     connectTimeout: 20000, // Increased timeout for external services
-    enableReadyCheck: true,
     keepAlive: 30000,
     family: 4, // Force IPv4
     enableOfflineQueue: false,

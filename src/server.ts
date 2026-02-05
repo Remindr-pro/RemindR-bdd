@@ -1,5 +1,27 @@
 import dotenv from 'dotenv';
-dotenv.config();
+import { resolve } from 'node:path';
+
+// Load .env file explicitly
+const envPath = process.env.NODE_ENV === 'production' 
+  ? resolve(process.cwd(), '.env')
+  : resolve(process.cwd(), '.env');
+
+const result = dotenv.config({ path: envPath });
+
+if (result.error && process.env.NODE_ENV === 'production') {
+  console.warn('⚠️  Warning: .env file not found or could not be loaded:', result.error.message);
+  console.warn('📁 Current working directory:', process.cwd());
+  console.warn('📁 Looking for .env at:', envPath);
+}
+
+// Log DATABASE_URL (masked) for debugging
+if (process.env.NODE_ENV === 'production') {
+  const dbUrl = process.env.DATABASE_URL || '';
+  const maskedUrl = dbUrl.replace(/:[^:@]+@/, ':****@');
+  console.log('📊 DATABASE_URL loaded:', maskedUrl);
+  console.log('📊 DATABASE_URL contains "postgres:5432":', dbUrl.includes('postgres:5432'));
+  console.log('📊 DATABASE_URL contains "supabase":', dbUrl.includes('supabase'));
+}
 
 import express from 'express';
 import cors from 'cors';

@@ -14,6 +14,7 @@
     "prisma:force-regenerate": "node scripts/force-prisma-regenerate.js",
     "test:db": "node scripts/test-db-connection.js",
     "test:network": "node scripts/test-supabase-network.js",
+    "test:dns": "node scripts/test-dns-network.js",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",

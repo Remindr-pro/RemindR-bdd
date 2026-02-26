@@ -27,6 +27,39 @@
  *           type: array
  *           items:
  *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *               healthProfile:
+ *                 type: object
+ *                 nullable: true
+ *                 properties:
+ *                   bloodType:
+ *                     type: string
+ *                   height:
+ *                     type: number
+ *                   weight:
+ *                     type: number
+ *                   allergies:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   chronicConditions:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   medications:
+ *                     type: array
+ *                     items:
+ *                       type: string
  *
  *     FamilyUpdate:
  *       type: object
@@ -86,6 +119,8 @@
  *         description: Family details
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Access denied (own family only)
  *       404:
  *         description: Family not found
  *
@@ -111,6 +146,8 @@
  *         description: Family updated successfully
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Access denied (own family only)
  *       404:
  *         description: Family not found
  */

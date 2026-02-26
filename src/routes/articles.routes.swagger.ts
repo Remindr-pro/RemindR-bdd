@@ -28,6 +28,12 @@
  *         publishedAt:
  *           type: string
  *           format: date-time
+ *         targetAudience:
+ *           type: object
+ *         seoKeywords:
+ *           type: array
+ *           items:
+ *             type: string
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -60,6 +66,12 @@
  *         author:
  *           type: string
  *           example: "Dr. Smith"
+ *         targetAudience:
+ *           type: object
+ *         seoKeywords:
+ *           type: array
+ *           items:
+ *             type: string
  */
 
 /**

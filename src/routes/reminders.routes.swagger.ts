@@ -41,6 +41,16 @@
  *               type: string
  *             name:
  *               type: string
+ *         user:
+ *           type: object
+ *           description: Inclus dans la réponse calendar (firstName, lastName)
+ *           properties:
+ *             id:
+ *               type: string
+ *             firstName:
+ *               type: string
+ *             lastName:
+ *               type: string
  *
  *     ReminderCreate:
  *       type: object

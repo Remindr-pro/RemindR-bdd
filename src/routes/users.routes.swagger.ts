@@ -26,12 +26,19 @@
  *           type: string
  *         role:
  *           type: string
- *           enum: [admin, editor, family_member]
+ *           enum: [admin, editor, family_member, professional]
  *         userType:
  *           type: string
  *           enum: [INDIVIDUAL, PROFESSIONAL, ADMIN]
  *         profilePictureUrl:
  *           type: string
+ *         profileCompleted:
+ *           type: boolean
+ *           description: Indique si le profil est complété (masquer la modale de complétion)
+ *         familyId:
+ *           type: string
+ *           format: uuid
+ *           nullable: true
  *         isActive:
  *           type: boolean
  *         createdAt:
@@ -51,6 +58,9 @@
  *           type: string
  *         profilePictureUrl:
  *           type: string
+ *         profileCompleted:
+ *           type: boolean
+ *           description: true pour indiquer que l'utilisateur a complété son profil
  *         userType:
  *           type: string
  *           enum: [INDIVIDUAL, PROFESSIONAL, ADMIN]

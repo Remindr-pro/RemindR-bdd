@@ -1,5 +1,41 @@
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     Document:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         userId:
+ *           type: string
+ *           format: uuid
+ *         familyId:
+ *           type: string
+ *           format: uuid
+ *           nullable: true
+ *         documentType:
+ *           type: string
+ *         fileName:
+ *           type: string
+ *         fileUrl:
+ *           type: string
+ *         mimeType:
+ *           type: string
+ *         sentToMutuelle:
+ *           type: boolean
+ *         sentAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ */
+
+/**
+ * @swagger
  * /api/v1/documents:
  *   get:
  *     summary: Liste des documents de l'utilisateur et de sa famille
@@ -19,16 +55,7 @@
  *                 data:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                       documentType:
- *                         type: string
- *                       fileName:
- *                         type: string
- *                       sentToMutuelle:
- *                         type: boolean
+ *                     $ref: '#/components/schemas/Document'
  *       401:
  *         description: Unauthorized
  *

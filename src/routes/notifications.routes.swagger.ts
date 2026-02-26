@@ -21,6 +21,11 @@
  *           type: string
  *         message:
  *           type: string
+ *         sentAt:
+ *           type: string
+ *           format: date-time
+ *         delivered:
+ *           type: boolean
  *         clicked:
  *           type: boolean
  *         createdAt:

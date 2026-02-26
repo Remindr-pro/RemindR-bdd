@@ -49,6 +49,10 @@
  *     QuestionnaryCreate:
  *       type: object
  *       properties:
+ *         userId:
+ *           type: string
+ *           format: uuid
+ *           description: User ID (optional, uses current user if omitted)
  *         step:
  *           type: integer
  *         nbPersonsFollowed:

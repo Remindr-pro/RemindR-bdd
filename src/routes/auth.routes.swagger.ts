@@ -47,6 +47,9 @@
  *           type: string
  *           format: uuid
  *           example: 123e4567-e89b-12d3-a456-426614174000
+ *         memberNumber:
+ *           type: string
+ *           description: Numéro adhérent mutuelle (pour vérification d'identité)
  *
  *     LoginRequest:
  *       type: object
@@ -231,21 +234,7 @@
  *                 success:
  *                   type: boolean
  *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                     email:
- *                       type: string
- *                     firstName:
- *                       type: string
- *                     lastName:
- *                       type: string
- *                     userType:
- *                       type: string
- *                     profileCompleted:
- *                       type: boolean
- *                       description: Indique si le profil est complété (masquer la modale de complétion)
+ *                   $ref: '#/components/schemas/User'
  *       401:
  *         description: Unauthorized
  */

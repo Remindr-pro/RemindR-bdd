@@ -137,6 +137,8 @@
  *         description: Health profile details
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Access denied (family members only)
  *       404:
  *         description: Health profile not found
  */
@@ -160,6 +162,8 @@
  *         description: Health profile created successfully
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Access denied (self or family members only)
  */
 
 /**
@@ -187,6 +191,8 @@
  *         description: Health profile updated successfully
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Access denied (self or family members only)
  *       404:
  *         description: Health profile not found
  */

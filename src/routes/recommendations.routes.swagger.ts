@@ -11,6 +11,12 @@
  *         userId:
  *           type: string
  *           format: uuid
+ *         title:
+ *           type: string
+ *         description:
+ *           type: string
+ *         recommendationType:
+ *           type: string
  *         articleId:
  *           type: string
  *           format: uuid

@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { Prisma } from '@prisma/client';
@@ -27,6 +27,18 @@ export class FamilyController {
               role: true,
               userType: true,
               isActive: true,
+              dateOfBirth: true,
+              healthProfile: {
+                select: {
+                  id: true,
+                  bloodType: true,
+                  height: true,
+                  weight: true,
+                  allergies: true,
+                  chronicConditions: true,
+                  medications: true,
+                },
+              },
             },
           },
         },
@@ -49,10 +61,26 @@ export class FamilyController {
     }
   }
 
-  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: 'Unauthorized',
+        });
+        return;
+      }
+
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
+
+      if (req.user.familyId !== idStr) {
+        res.status(403).json({
+          success: false,
+          message: 'Access denied: you can only view your own family',
+        });
+        return;
+      }
 
       const family = await prisma.family.findUnique({
         where: { id: idStr },
@@ -89,10 +117,27 @@ export class FamilyController {
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async update(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: 'Unauthorized',
+        });
+        return;
+      }
+
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
+
+      if (req.user.familyId !== idStr) {
+        res.status(403).json({
+          success: false,
+          message: 'Access denied: you can only update your own family',
+        });
+        return;
+      }
+
       const { familyName, primaryContactEmail, subscriptionStatus } = req.body;
 
       const updateData: Prisma.FamilyUpdateInput = {};

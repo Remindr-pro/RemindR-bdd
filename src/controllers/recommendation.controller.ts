@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 
@@ -41,26 +41,26 @@ export class RecommendationController {
     }
   }
 
-  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      if (!req.user) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
+      }
+
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
 
-      const recommendation = await prisma.recommendation.findUnique({
-        where: { id: idStr },
+      const recommendation = await prisma.recommendation.findFirst({
+        where: {
+          id: idStr,
+          userId: req.user.id,
+        },
         include: {
           partner: true,
           article: {
             include: {
               category: true,
-            },
-          },
-          user: {
-            select: {
-              id: true,
-              email: true,
-              firstName: true,
-              lastName: true,
             },
           },
         },
@@ -83,12 +83,32 @@ export class RecommendationController {
     }
   }
 
-  async dismiss(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async dismiss(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      if (!req.user) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
+      }
+
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
 
-      const recommendation = await prisma.recommendation.update({
+      const recommendation = await prisma.recommendation.findFirst({
+        where: {
+          id: idStr,
+          userId: req.user.id,
+        },
+      });
+
+      if (!recommendation) {
+        res.status(404).json({
+          success: false,
+          message: 'Recommendation not found',
+        });
+        return;
+      }
+
+      const updated = await prisma.recommendation.update({
         where: { id: idStr },
         data: {
           isDismissed: true,
@@ -99,19 +119,39 @@ export class RecommendationController {
       res.json({
         success: true,
         message: 'Recommendation dismissed',
-        data: recommendation,
+        data: updated,
       });
     } catch (error) {
       next(error);
     }
   }
 
-  async recordClick(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async recordClick(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      if (!req.user) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
+      }
+
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
 
-      const recommendation = await prisma.recommendation.update({
+      const recommendation = await prisma.recommendation.findFirst({
+        where: {
+          id: idStr,
+          userId: req.user.id,
+        },
+      });
+
+      if (!recommendation) {
+        res.status(404).json({
+          success: false,
+          message: 'Recommendation not found',
+        });
+        return;
+      }
+
+      const updated = await prisma.recommendation.update({
         where: { id: idStr },
         data: {
           clickedAt: new Date(),
@@ -121,7 +161,7 @@ export class RecommendationController {
       res.json({
         success: true,
         message: 'Click recorded',
-        data: recommendation,
+        data: updated,
       });
     } catch (error) {
       next(error);

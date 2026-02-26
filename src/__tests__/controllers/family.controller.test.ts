@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { FamilyController } from '../../controllers/family.controller';
 import prisma from '../../config/database';
 import { AuthRequest } from '../../middleware/auth';
@@ -112,7 +112,7 @@ describe('FamilyController', () => {
       (prisma.family.update as jest.Mock).mockResolvedValue(mockUpdated);
 
       await controller.update(
-        mockRequest as Request,
+        mockRequest as AuthRequest,
         mockResponse as Response,
         nextFunction
       );

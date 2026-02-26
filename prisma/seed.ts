@@ -121,6 +121,25 @@ async function main() {
     },
   });
 
+  const camillePassword = await hashPassword('camille123');
+  const camille = await prisma.user.upsert({
+    where: { email: 'camille.dupont@mail.com' },
+    update: { userType: UserType.INDIVIDUAL },
+    create: {
+      email: 'camille.dupont@mail.com',
+      passwordHash: camillePassword,
+      firstName: 'Camille',
+      lastName: 'Dupont',
+      phoneNumber: '+33612345678',
+      dateOfBirth: new Date('1990-06-22'),
+      genderBirth: 'female',
+      genderActual: 'female',
+      role: 'family_member',
+      userType: UserType.INDIVIDUAL,
+      familyId: family.id,
+    },
+  });
+
   await prisma.healthProfile.upsert({
     where: { userId: user.id },
     update: {},
@@ -150,6 +169,24 @@ async function main() {
       allergies: ['Pollen'],
       chronicConditions: [],
       medications: [],
+      preferences: {
+        language: 'fr',
+        units: 'metric',
+      },
+    },
+  });
+
+  await prisma.healthProfile.upsert({
+    where: { userId: camille.id },
+    update: {},
+    create: {
+      userId: camille.id,
+      bloodType: 'B+',
+      height: 168.0,
+      weight: 62.0,
+      allergies: [],
+      chronicConditions: [],
+      medications: ['Magnésium'],
       preferences: {
         language: 'fr',
         units: 'metric',
@@ -240,6 +277,17 @@ async function main() {
     },
   });
 
+  await prisma.partner.create({
+    data: {
+      name: 'Mutuelle Harmonie',
+      description: 'Mutuelle partenaire RemindR - Prenez soin de votre santé',
+      category: 'mutuelle',
+      websiteUrl: 'https://remind-r.com/partenaires/harmonie',
+      isActive: true,
+      isExtern: false,
+    },
+  });
+
   await prisma.questionnary.upsert({
     where: { userId: user.id },
     update: {},
@@ -276,6 +324,24 @@ async function main() {
     },
   });
 
+  await prisma.questionnary.upsert({
+    where: { userId: camille.id },
+    update: {},
+    create: {
+      userId: camille.id,
+      step: 5,
+      nbPersonsFollowed: 1,
+      hasGeneralPractitioner: true,
+      generalPractitionerName: 'Dr. Martin',
+      physicalActivityFrequency: '3-4 times per week',
+      dietType: 'balanced',
+      usesAlternativeMedicine: false,
+      enabledReminderTypes: ['medication', 'appointment'],
+      reminderFrequency: 'daily',
+      enabledNotificationChannels: ['push', 'email'],
+    },
+  });
+
   console.log('✅ Seeding completed!');
   console.log('📧 Utilisateurs créés :');
   console.log('   Admin:       admin@remind-r.com / admin123');
@@ -283,6 +349,7 @@ async function main() {
   console.log('   Pro:         professional@remind-r.com / pro123');
   console.log('   Marie:       marie@remind-r.com / marie123');
   console.log('   Standalone:  standalone@remind-r.com / standalone123');
+  console.log('   Camille:     camille.dupont@mail.com / camille123');
 }
 
 main()

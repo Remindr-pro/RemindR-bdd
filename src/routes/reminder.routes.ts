@@ -7,6 +7,7 @@ const reminderController = new ReminderController();
 
 router.use(authenticate as any);
 
+router.get('/calendar', reminderController.getCalendar as any);
 router.get('/', reminderController.getAll as any);
 router.get('/:id', reminderController.getById as any);
 router.post('/', reminderController.create as any);

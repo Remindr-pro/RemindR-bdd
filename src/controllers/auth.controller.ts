@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { hashPassword, comparePassword } from '../utils/bcrypt';
@@ -6,6 +7,7 @@ import { AuthRequest } from '../middleware/auth';
 import { UserType } from '@prisma/client';
 import { PassportUser } from '../config/passport';
 import { webhookService } from '../services/webhook.service';
+import { notificationService } from '../services/notification.service';
 import { oauth2Config } from '../config/jwt';
 import jwt from 'jsonwebtoken';
 import passport from '../config/passport';
@@ -64,6 +66,7 @@ export class AuthController {
           role: true,
           userType: true,
           familyId: true,
+          profileCompleted: true,
         },
       });
 
@@ -165,6 +168,7 @@ export class AuthController {
             role: user.role,
             userType: user.userType,
             familyId: user.familyId,
+            profileCompleted: user.profileCompleted,
           },
           token,
           refreshToken,
@@ -302,6 +306,7 @@ export class AuthController {
           role: true,
           userType: true,
           profilePictureUrl: true,
+          profileCompleted: true,
           familyId: true,
           createdAt: true,
         },
@@ -309,6 +314,325 @@ export class AuthController {
 
       res.json({
         success: true,
+        data: user,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email } = req.body;
+      const emailStr = typeof email === 'string' ? email.trim().toLowerCase() : '';
+
+      if (!emailStr) {
+        res.status(400).json({
+          success: false,
+          message: 'Email is required',
+        });
+        return;
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { email: emailStr },
+      });
+
+      if (!user || !user.passwordHash || user.passwordHash === '') {
+        res.json({
+          success: true,
+          message: 'If an account exists with this email, you will receive a password reset link.',
+        });
+        return;
+      }
+
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+      await prisma.passwordResetToken.deleteMany({
+        where: { userId: user.id },
+      });
+
+      await prisma.passwordResetToken.create({
+        data: {
+          userId: user.id,
+          token,
+          expiresAt,
+        },
+      });
+
+      const frontendUrl = process.env.FRONTEND_URL || 'https://remind-r.com';
+      const resetLink = `${frontendUrl}/connexion/reinitialiser-mot-de-passe?token=${token}`;
+
+      await notificationService.sendEmail({
+        userId: user.id,
+        email: user.email,
+        notificationType: 'email',
+        title: 'Réinitialisation de votre mot de passe - RemindR',
+        message: `Bonjour ${user.firstName},\n\nVous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le lien ci-dessous pour définir un nouveau mot de passe :\n\n${resetLink}\n\nCe lien expire dans 1 heure.\n\nSi vous n'avez pas fait cette demande, ignorez cet email.\n\nL'équipe RemindR`,
+      });
+
+      res.json({
+        success: true,
+        message: 'If an account exists with this email, you will receive a password reset link.',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { token, newPassword } = req.body;
+
+      if (!token || typeof token !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: 'Token is required',
+        });
+        return;
+      }
+
+      if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
+        res.status(400).json({
+          success: false,
+          message: 'Password must be at least 8 characters',
+        });
+        return;
+      }
+
+      const resetToken = await prisma.passwordResetToken.findUnique({
+        where: { token },
+        include: { user: true },
+      });
+
+      if (!resetToken || resetToken.expiresAt < new Date()) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid or expired reset token',
+        });
+        return;
+      }
+
+      const passwordHash = await hashPassword(newPassword);
+
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: resetToken.userId },
+          data: { passwordHash },
+        }),
+        prisma.passwordResetToken.delete({
+          where: { id: resetToken.id },
+        }),
+      ]);
+
+      res.json({
+        success: true,
+        message: 'Password has been reset successfully. You can now log in with your new password.',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async activateAccount(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { token } = req.body;
+
+      if (!token || typeof token !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: 'Token is required',
+        });
+        return;
+      }
+
+      const activationToken = await prisma.activationToken.findUnique({
+        where: { token },
+        include: { user: true },
+      });
+
+      if (!activationToken || activationToken.expiresAt < new Date()) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid or expired activation token',
+        });
+        return;
+      }
+
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: activationToken.userId },
+          data: { isActive: true },
+        }),
+        prisma.activationToken.delete({
+          where: { id: activationToken.id },
+        }),
+      ]);
+
+      res.json({
+        success: true,
+        message: 'Account activated successfully. You can now log in.',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async verifyIdentity(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { memberNumber, dateOfBirth, email } = req.body;
+
+      if (!memberNumber || !dateOfBirth || !email) {
+        res.status(400).json({
+          success: false,
+          message: 'memberNumber, dateOfBirth and email are required',
+        });
+        return;
+      }
+
+      const user = await prisma.user.findFirst({
+        where: {
+          email,
+          memberNumber,
+          dateOfBirth: new Date(dateOfBirth),
+        },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          familyId: true,
+        },
+      });
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'No account found matching the provided credentials. Please check your member number, date of birth and email.',
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        message: 'Identity verified successfully',
+        data: {
+          userId: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          familyId: user.familyId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async resendActivation(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email } = req.body;
+      const emailStr = typeof email === 'string' ? email.trim().toLowerCase() : '';
+
+      if (!emailStr) {
+        res.status(400).json({
+          success: false,
+          message: 'Email is required',
+        });
+        return;
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { email: emailStr },
+      });
+
+      if (!user) {
+        res.json({
+          success: true,
+          message: 'If an account exists with this email, you will receive an activation link.',
+        });
+        return;
+      }
+
+      if (user.isActive) {
+        res.json({
+          success: true,
+          message: 'Account is already activated. You can log in.',
+        });
+        return;
+      }
+
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      await prisma.activationToken.deleteMany({
+        where: { userId: user.id },
+      });
+
+      await prisma.activationToken.create({
+        data: {
+          userId: user.id,
+          token,
+          expiresAt,
+        },
+      });
+
+      const frontendUrl = process.env.FRONTEND_URL || 'https://remind-r.com';
+      const activationLink = `${frontendUrl}/bienvenue/activer?token=${token}`;
+
+      await notificationService.sendEmail({
+        userId: user.id,
+        email: user.email,
+        notificationType: 'email',
+        title: 'Activez votre compte RemindR',
+        message: `Bonjour ${user.firstName},\n\nCliquez sur le lien ci-dessous pour activer votre compte :\n\n${activationLink}\n\nCe lien expire dans 24 heures.\n\nL'équipe RemindR`,
+      });
+
+      res.json({
+        success: true,
+        message: 'If an account exists with this email, you will receive an activation link.',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async patchMe(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: 'Unauthorized',
+        });
+        return;
+      }
+
+      const { profileCompleted } = req.body;
+
+      if (typeof profileCompleted !== 'boolean') {
+        res.status(400).json({
+          success: false,
+          message: 'profileCompleted must be a boolean',
+        });
+        return;
+      }
+
+      const user = await prisma.user.update({
+        where: { id: req.user.id },
+        data: { profileCompleted },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          profileCompleted: true,
+        },
+      });
+
+      res.json({
+        success: true,
+        message: 'Profile updated successfully',
         data: user,
       });
     } catch (error) {

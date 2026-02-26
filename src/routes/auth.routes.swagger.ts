@@ -89,6 +89,10 @@
  *                   type: string
  *                 userType:
  *                   type: string
+ *                 profileCompleted:
+ *                   type: boolean
+ *                   description: Indique si l'utilisateur a complété son profil (pour masquer la modale)
+ *                   example: false
  *             token:
  *               type: string
  *               example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -239,6 +243,57 @@
  *                       type: string
  *                     userType:
  *                       type: string
+ *                     profileCompleted:
+ *                       type: boolean
+ *                       description: Indique si le profil est complété (masquer la modale de complétion)
+ *       401:
+ *         description: Unauthorized
+ */
+
+/**
+ * @swagger
+ * /api/v1/auth/me:
+ *   patch:
+ *     summary: Marquer le profil comme complété
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - profileCompleted
+ *             properties:
+ *               profileCompleted:
+ *                 type: boolean
+ *                 description: true pour indiquer que l'utilisateur a complété son profil
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: Profil mis à jour
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     profileCompleted:
+ *                       type: boolean
+ *       400:
+ *         description: Validation error (profileCompleted must be boolean)
  *       401:
  *         description: Unauthorized
  */
@@ -263,6 +318,162 @@
  *                   type: boolean
  *                 message:
  *                   type: string
+ */
+
+/**
+ * @swagger
+ * /api/v1/auth/forgot-password:
+ *   post:
+ *     summary: Demander la réinitialisation du mot de passe
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Si l'email existe, un lien de réinitialisation a été envoyé
+ *       400:
+ *         description: Validation error
+ */
+
+/**
+ * @swagger
+ * /api/v1/auth/reset-password:
+ *   post:
+ *     summary: Réinitialiser le mot de passe avec le token reçu par email
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - newPassword
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Token reçu par email
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 8
+ *     responses:
+ *       200:
+ *         description: Mot de passe réinitialisé
+ *       400:
+ *         description: Token invalide ou expiré
+ */
+
+/**
+ * @swagger
+ * /api/v1/auth/activate:
+ *   post:
+ *     summary: Activer un compte avec le token reçu par email
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Compte activé
+ *       400:
+ *         description: Token invalide ou expiré
+ */
+
+/**
+ * @swagger
+ * /api/v1/auth/resend-activation:
+ *   post:
+ *     summary: Renvoyer le lien d'activation
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Si l'email existe et le compte n'est pas activé, un lien a été envoyé
+ */
+
+/**
+ * @swagger
+ * /api/v1/auth/verify-identity:
+ *   post:
+ *     summary: Vérifier l'identité pour l'activation mutuelle (numéro adhérent + date de naissance + email)
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - memberNumber
+ *               - dateOfBirth
+ *               - email
+ *             properties:
+ *               memberNumber:
+ *                 type: string
+ *                 description: Numéro d'adhérent mutuelle
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *                 example: 1990-01-01
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Identité vérifiée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     userId:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     familyId:
+ *                       type: string
+ *                       nullable: true
+ *       404:
+ *         description: Aucun compte trouvé avec ces identifiants
  */
 
 /**

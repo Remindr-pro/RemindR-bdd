@@ -97,6 +97,51 @@
 
 /**
  * @swagger
+ * /api/v1/reminders/calendar:
+ *   get:
+ *     summary: Calendrier familial - rappels de l'utilisateur et des membres de sa famille
+ *     tags: [Reminders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: start
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: 2026-02-01
+ *         description: Date de début (ISO)
+ *       - in: query
+ *         name: end
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: 2026-02-28
+ *         description: Date de fin (ISO)
+ *     responses:
+ *       200:
+ *         description: Liste des rappels de la famille dans la période
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Reminder'
+ *       400:
+ *         description: Paramètres start/end manquants ou invalides
+ *       401:
+ *         description: Unauthorized
+ */
+
+/**
+ * @swagger
  * /api/v1/reminders:
  *   get:
  *     summary: Get all reminders for current user

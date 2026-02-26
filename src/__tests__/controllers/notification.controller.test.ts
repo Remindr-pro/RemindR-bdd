@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { NotificationController } from '../../controllers/notification.controller';
 import prisma from '../../config/database';
 import { AuthRequest } from '../../middleware/auth';
@@ -10,6 +10,7 @@ jest.mock('../../config/database', () => ({
     notificationLog: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
     },
   },
@@ -96,27 +97,45 @@ describe('NotificationController', () => {
   });
 
   describe('markAsRead', () => {
-    it('should mark notification as read', async () => {
+    it('should mark notification as read when owned by user', async () => {
       mockRequest.params = { id: 'notif-123' };
 
+      const mockExisting = { id: 'notif-123', userId: '123' };
       const mockUpdated = {
         id: 'notif-123',
         clicked: true,
       };
 
+      (prisma.notificationLog.findFirst as jest.Mock).mockResolvedValue(mockExisting);
       (prisma.notificationLog.update as jest.Mock).mockResolvedValue(mockUpdated);
 
       await controller.markAsRead(
-        mockRequest as Request,
+        mockRequest as AuthRequest,
         mockResponse as Response,
         nextFunction
       );
 
+      expect(prisma.notificationLog.findFirst).toHaveBeenCalledWith({
+        where: { id: 'notif-123', userId: '123' },
+      });
       expect(prisma.notificationLog.update).toHaveBeenCalledWith({
         where: { id: 'notif-123' },
         data: { clicked: true },
       });
       expect(mockResponse.json).toHaveBeenCalled();
+    });
+
+    it('should return 404 if notification not found or not owned by user', async () => {
+      mockRequest.params = { id: 'notif-123' };
+      (prisma.notificationLog.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await controller.markAsRead(
+        mockRequest as AuthRequest,
+        mockResponse as Response,
+        nextFunction
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
   });
 });

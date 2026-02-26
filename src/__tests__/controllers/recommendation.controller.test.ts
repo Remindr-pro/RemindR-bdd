@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { RecommendationController } from '../../controllers/recommendation.controller';
 import prisma from '../../config/database';
 import { AuthRequest } from '../../middleware/auth';
@@ -10,6 +10,7 @@ jest.mock('../../config/database', () => ({
     recommendation: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
     },
   },
@@ -98,23 +99,32 @@ describe('RecommendationController', () => {
   });
 
   describe('dismiss', () => {
-    it('should dismiss a recommendation', async () => {
+    it('should dismiss a recommendation owned by user', async () => {
       mockRequest.params = { id: 'rec-123' };
 
+      const mockRecommendation = {
+        id: 'rec-123',
+        userId: '123',
+        isDismissed: false,
+      };
       const mockDismissed = {
         id: 'rec-123',
         isDismissed: true,
         dismissedAt: new Date(),
       };
 
+      (prisma.recommendation.findFirst as jest.Mock).mockResolvedValue(mockRecommendation);
       (prisma.recommendation.update as jest.Mock).mockResolvedValue(mockDismissed);
 
       await controller.dismiss(
-        mockRequest as Request,
+        mockRequest as AuthRequest,
         mockResponse as Response,
         nextFunction
       );
 
+      expect(prisma.recommendation.findFirst).toHaveBeenCalledWith({
+        where: { id: 'rec-123', userId: '123' },
+      });
       expect(prisma.recommendation.update).toHaveBeenCalledWith({
         where: { id: 'rec-123' },
         data: {
@@ -124,25 +134,46 @@ describe('RecommendationController', () => {
       });
       expect(mockResponse.json).toHaveBeenCalled();
     });
+
+    it('should return 404 if recommendation not found or not owned by user', async () => {
+      mockRequest.params = { id: 'rec-123' };
+      (prisma.recommendation.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await controller.dismiss(
+        mockRequest as AuthRequest,
+        mockResponse as Response,
+        nextFunction
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+    });
   });
 
   describe('recordClick', () => {
-    it('should record a click on recommendation', async () => {
+    it('should record a click on recommendation owned by user', async () => {
       mockRequest.params = { id: 'rec-123' };
 
+      const mockRecommendation = {
+        id: 'rec-123',
+        userId: '123',
+      };
       const mockUpdated = {
         id: 'rec-123',
         clickedAt: new Date(),
       };
 
+      (prisma.recommendation.findFirst as jest.Mock).mockResolvedValue(mockRecommendation);
       (prisma.recommendation.update as jest.Mock).mockResolvedValue(mockUpdated);
 
       await controller.recordClick(
-        mockRequest as Request,
+        mockRequest as AuthRequest,
         mockResponse as Response,
         nextFunction
       );
 
+      expect(prisma.recommendation.findFirst).toHaveBeenCalledWith({
+        where: { id: 'rec-123', userId: '123' },
+      });
       expect(prisma.recommendation.update).toHaveBeenCalledWith({
         where: { id: 'rec-123' },
         data: {

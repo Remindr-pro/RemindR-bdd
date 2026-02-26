@@ -49,6 +49,7 @@ export class UserController {
           role: true,
           userType: true,
           profilePictureUrl: true,
+          profileCompleted: true,
           isActive: true,
           createdAt: true,
         },
@@ -75,7 +76,7 @@ export class UserController {
     try {
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
-      const { firstName, lastName, phoneNumber, genderActual, profilePictureUrl, userType } = req.body;
+      const { firstName, lastName, phoneNumber, genderActual, profilePictureUrl, profileCompleted, userType } = req.body;
 
       const updateData: Prisma.UserUpdateInput = {};
       if (firstName !== undefined) updateData.firstName = firstName;
@@ -83,6 +84,7 @@ export class UserController {
       if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
       if (genderActual !== undefined) updateData.genderActual = genderActual;
       if (profilePictureUrl !== undefined) updateData.profilePictureUrl = profilePictureUrl;
+      if (profileCompleted !== undefined) updateData.profileCompleted = profileCompleted;
       if (userType !== undefined) updateData.userType = userType;
 
       const user = await prisma.user.update({
@@ -96,6 +98,7 @@ export class UserController {
           phoneNumber: true,
           genderActual: true,
           profilePictureUrl: true,
+          profileCompleted: true,
         },
       });
 

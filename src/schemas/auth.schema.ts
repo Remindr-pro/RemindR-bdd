@@ -29,3 +29,42 @@ export const refreshTokenSchema = z.object({
   }),
 });
 
+export const patchMeSchema = z.object({
+  body: z.object({
+    profileCompleted: z.boolean(),
+  }),
+});
+
+export const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email address').transform((val) => val.trim().toLowerCase()),
+  }),
+});
+
+export const resetPasswordSchema = z.object({
+  body: z.object({
+    token: z.string().min(1, 'Token is required'),
+    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+  }),
+});
+
+export const activateAccountSchema = z.object({
+  body: z.object({
+    token: z.string().min(1, 'Token is required'),
+  }),
+});
+
+export const resendActivationSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email address').transform((val) => val.trim().toLowerCase()),
+  }),
+});
+
+export const verifyIdentitySchema = z.object({
+  body: z.object({
+    memberNumber: z.string().min(1, 'Member number is required').transform((val) => val.trim()),
+    dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
+    email: z.string().email('Invalid email address').transform((val) => val.trim().toLowerCase()),
+  }),
+});
+

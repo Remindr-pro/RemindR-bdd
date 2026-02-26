@@ -4,6 +4,76 @@ import { AuthRequest } from '../middleware/auth';
 import { Prisma } from '@prisma/client';
 
 export class ReminderController {
+  async getCalendar(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: 'Unauthorized',
+        });
+        return;
+      }
+
+      const start = req.query.start as string;
+      const end = req.query.end as string;
+
+      if (!start || !end) {
+        res.status(400).json({
+          success: false,
+          message: 'Query parameters start and end (ISO date) are required',
+        });
+        return;
+      }
+
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid date format for start or end',
+        });
+        return;
+      }
+
+      const userIds = req.user.familyId
+        ? (await prisma.user.findMany({
+            where: { familyId: req.user.familyId },
+            select: { id: true },
+          })).map((u) => u.id)
+        : [req.user.id];
+
+      const reminders = await prisma.reminder.findMany({
+        where: {
+          userId: { in: userIds },
+          isActive: true,
+          AND: [
+            { OR: [{ startDate: null }, { startDate: { lte: endDate } }] },
+            { OR: [{ endDate: null }, { endDate: { gte: startDate } }] },
+          ],
+        },
+        include: {
+          type: true,
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+        orderBy: { scheduledTime: 'asc' },
+      });
+
+      res.json({
+        success: true,
+        data: reminders,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getAll(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user) {

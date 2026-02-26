@@ -17,7 +17,8 @@ model InsuranceCompany {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  families Family[]
+  families   Family[]
+  documents  Document[]
 
   @@map("insurance_companies")
 }
@@ -33,6 +34,7 @@ model Family {
 
   insuranceCompany InsuranceCompany? @relation(fields: [insuranceCompanyId], references: [id])
   users            User[]
+  documents        Document[]
 
   @@map("families")
 }
@@ -46,6 +48,7 @@ enum UserType {
 model User {
   id                String   @id @default(uuid()) @db.Uuid
   familyId          String?  @map("family_id") @db.Uuid
+  memberNumber      String?  @map("member_number") @db.VarChar
   email             String   @unique @db.VarChar
   passwordHash      String   @map("password_hash") @db.VarChar
   firstName         String   @map("first_name") @db.VarChar
@@ -57,16 +60,20 @@ model User {
   role              String   @default("family_member") @db.VarChar
   userType          UserType @default(INDIVIDUAL) @map("user_type")
   profilePictureUrl String?  @map("profile_picture_url") @db.Text
+  profileCompleted  Boolean  @default(false) @map("profile_completed")
   isActive          Boolean  @default(true) @map("is_active")
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  family           Family?           @relation(fields: [familyId], references: [id])
-  healthProfile    HealthProfile?
-  reminders        Reminder[]
-  recommendations  Recommendation[]
-  notificationLogs NotificationLog[]
-  questionnary     Questionnary?
+  family               Family?               @relation(fields: [familyId], references: [id])
+  healthProfile        HealthProfile?
+  reminders            Reminder[]
+  recommendations      Recommendation[]
+  notificationLogs     NotificationLog[]
+  questionnary         Questionnary?
+  passwordResetTokens  PasswordResetToken[]
+  activationTokens     ActivationToken[]
+  documents            Document[]
 
   @@index([familyId])
   @@index([isActive])
@@ -293,4 +300,57 @@ model TokenBlacklist {
 
   @@index([expiresAt])
   @@map("token_blacklist")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique @db.VarChar
+  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+model ActivationToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique @db.VarChar
+  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([expiresAt])
+  @@map("activation_tokens")
+}
+
+model Document {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @map("user_id") @db.Uuid
+  familyId           String?  @map("family_id") @db.Uuid
+  insuranceCompanyId String?  @map("insurance_company_id") @db.Uuid
+  documentType       String   @map("document_type") @db.VarChar
+  fileName           String   @map("file_name") @db.VarChar
+  fileUrl            String   @map("file_url") @db.Text
+  mimeType           String?  @map("mime_type") @db.VarChar
+  sentToMutuelle     Boolean  @default(false) @map("sent_to_mutuelle")
+  sentAt             DateTime? @map("sent_at") @db.Timestamp(6)
+  metadata           Json?
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  family           Family?           @relation(fields: [familyId], references: [id])
+  insuranceCompany InsuranceCompany? @relation(fields: [insuranceCompanyId], references: [id])
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([documentType])
+  @@map("documents")
 }

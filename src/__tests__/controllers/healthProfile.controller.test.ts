@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { HealthProfileController } from '../../controllers/healthProfile.controller';
 import prisma from '../../config/database';
 import { AuthRequest } from '../../middleware/auth';
@@ -11,6 +11,9 @@ jest.mock('../../config/database', () => ({
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+    },
+    user: {
+      findUnique: jest.fn(),
     },
   },
 }));
@@ -112,7 +115,7 @@ describe('HealthProfileController', () => {
       (prisma.healthProfile.create as jest.Mock).mockResolvedValue(mockCreated);
 
       await controller.create(
-        mockRequest as Request,
+        mockRequest as AuthRequest,
         mockResponse as Response,
         nextFunction
       );
@@ -131,6 +134,11 @@ describe('HealthProfileController', () => {
         weight: 75.0,
       };
 
+      const mockExisting = {
+        id: 'profile-123',
+        userId: '123',
+        user: { familyId: null },
+      };
       const mockUpdated = {
         id: 'profile-123',
         bloodType: 'A+',
@@ -138,14 +146,16 @@ describe('HealthProfileController', () => {
         weight: 75.0,
       };
 
+      (prisma.healthProfile.findUnique as jest.Mock).mockResolvedValue(mockExisting);
       (prisma.healthProfile.update as jest.Mock).mockResolvedValue(mockUpdated);
 
       await controller.update(
-        mockRequest as Request,
+        mockRequest as AuthRequest,
         mockResponse as Response,
         nextFunction
       );
 
+      expect(prisma.healthProfile.findUnique).toHaveBeenCalled();
       expect(prisma.healthProfile.update).toHaveBeenCalled();
       expect(mockResponse.json).toHaveBeenCalled();
     });

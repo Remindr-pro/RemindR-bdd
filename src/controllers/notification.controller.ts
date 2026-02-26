@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 
@@ -39,23 +39,23 @@ export class NotificationController {
     }
   }
 
-  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      if (!req.user) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
+      }
+
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
 
-      const notification = await prisma.notificationLog.findUnique({
-        where: { id: idStr },
+      const notification = await prisma.notificationLog.findFirst({
+        where: {
+          id: idStr,
+          userId: req.user.id,
+        },
         include: {
           reminder: true,
-          user: {
-            select: {
-              id: true,
-              email: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
         },
       });
 
@@ -76,10 +76,30 @@ export class NotificationController {
     }
   }
 
-  async markAsRead(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async markAsRead(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      if (!req.user) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
+      }
+
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
+
+      const existing = await prisma.notificationLog.findFirst({
+        where: {
+          id: idStr,
+          userId: req.user.id,
+        },
+      });
+
+      if (!existing) {
+        res.status(404).json({
+          success: false,
+          message: 'Notification not found',
+        });
+        return;
+      }
 
       const notification = await prisma.notificationLog.update({
         where: { id: idStr },

@@ -64,6 +64,63 @@ async function main() {
     },
   });
 
+  const professionalPassword = await hashPassword('pro123');
+  await prisma.user.upsert({
+    where: { email: 'professional@remind-r.com' },
+    update: { userType: UserType.PROFESSIONAL },
+    create: {
+      email: 'professional@remind-r.com',
+      passwordHash: professionalPassword,
+      firstName: 'Dr. Jane',
+      lastName: 'Smith',
+      phoneNumber: '+1234567892',
+      dateOfBirth: new Date('1985-03-20'),
+      genderBirth: 'female',
+      genderActual: 'female',
+      role: 'professional',
+      userType: UserType.PROFESSIONAL,
+      familyId: null,
+    },
+  });
+
+  const mariePassword = await hashPassword('marie123');
+  const marie = await prisma.user.upsert({
+    where: { email: 'marie@remind-r.com' },
+    update: { userType: UserType.INDIVIDUAL },
+    create: {
+      email: 'marie@remind-r.com',
+      passwordHash: mariePassword,
+      firstName: 'Marie',
+      lastName: 'Doe',
+      phoneNumber: '+1234567893',
+      dateOfBirth: new Date('1998-08-10'),
+      genderBirth: 'female',
+      genderActual: 'female',
+      role: 'family_member',
+      userType: UserType.INDIVIDUAL,
+      familyId: family.id,
+    },
+  });
+
+  const standalonePassword = await hashPassword('standalone123');
+  await prisma.user.upsert({
+    where: { email: 'standalone@remind-r.com' },
+    update: { userType: UserType.INDIVIDUAL },
+    create: {
+      email: 'standalone@remind-r.com',
+      passwordHash: standalonePassword,
+      firstName: 'Alex',
+      lastName: 'Martin',
+      phoneNumber: '+1234567894',
+      dateOfBirth: new Date('1992-11-05'),
+      genderBirth: 'male',
+      genderActual: 'male',
+      role: 'family_member',
+      userType: UserType.INDIVIDUAL,
+      familyId: null,
+    },
+  });
+
   await prisma.healthProfile.upsert({
     where: { userId: user.id },
     update: {},
@@ -77,6 +134,24 @@ async function main() {
       medications: ['Vitamin D'],
       preferences: {
         language: 'en',
+        units: 'metric',
+      },
+    },
+  });
+
+  await prisma.healthProfile.upsert({
+    where: { userId: marie.id },
+    update: {},
+    create: {
+      userId: marie.id,
+      bloodType: 'A+',
+      height: 165.0,
+      weight: 58.0,
+      allergies: ['Pollen'],
+      chronicConditions: [],
+      medications: [],
+      preferences: {
+        language: 'fr',
         units: 'metric',
       },
     },
@@ -108,6 +183,19 @@ async function main() {
       recurrence: {
         frequency: 'daily',
       },
+      isActive: true,
+      startDate: new Date(),
+    },
+  });
+
+  await prisma.reminder.create({
+    data: {
+      userId: marie.id,
+      typeId: medicationType.id,
+      title: 'Rendez-vous médecin',
+      description: 'Contrôle annuel',
+      scheduledTime: new Date('1970-01-01T14:00:00'),
+      recurrence: { frequency: 'yearly' },
       isActive: true,
       startDate: new Date(),
     },
@@ -170,9 +258,31 @@ async function main() {
     },
   });
 
+  await prisma.questionnary.upsert({
+    where: { userId: marie.id },
+    update: {},
+    create: {
+      userId: marie.id,
+      step: 4,
+      nbPersonsFollowed: 2,
+      hasGeneralPractitioner: true,
+      generalPractitionerName: 'Dr. Dupont',
+      physicalActivityFrequency: '1-2 times per week',
+      dietType: 'vegetarian',
+      usesAlternativeMedicine: true,
+      enabledReminderTypes: ['medication'],
+      reminderFrequency: 'weekly',
+      enabledNotificationChannels: ['push'],
+    },
+  });
+
   console.log('✅ Seeding completed!');
-  console.log(`📧 Admin: admin@remind-r.com / admin123`);
-  console.log(`📧 User: user@remind-r.com / user123`);
+  console.log('📧 Utilisateurs créés :');
+  console.log('   Admin:       admin@remind-r.com / admin123');
+  console.log('   User:        user@remind-r.com / user123');
+  console.log('   Pro:         professional@remind-r.com / pro123');
+  console.log('   Marie:       marie@remind-r.com / marie123');
+  console.log('   Standalone:  standalone@remind-r.com / standalone123');
 }
 
 main()

@@ -28,6 +28,19 @@ export class AuthController {
         return;
       }
 
+      if (familyId) {
+        const familyExists = await prisma.family.findUnique({
+          where: { id: familyId },
+        });
+        if (!familyExists) {
+          res.status(400).json({
+            success: false,
+            message: 'Family ID does not exist',
+          });
+          return;
+        }
+      }
+
       const passwordHash = await hashPassword(password);
 
       const user = await prisma.user.create({
@@ -36,10 +49,10 @@ export class AuthController {
           passwordHash,
           firstName,
           lastName,
-          phoneNumber,
+          phoneNumber: phoneNumber || null,
           dateOfBirth: new Date(dateOfBirth),
-          genderBirth,
-          genderActual,
+          genderBirth: genderBirth || null,
+          genderActual: genderActual || null,
           familyId: familyId || null,
           userType: userType || UserType.INDIVIDUAL,
         },
@@ -102,6 +115,14 @@ export class AuthController {
         res.status(401).json({
           success: false,
           message: 'Invalid credentials',
+        });
+        return;
+      }
+
+      if (!user.passwordHash || user.passwordHash === '') {
+        res.status(401).json({
+          success: false,
+          message: 'This account uses social login. Please sign in with Google or Apple.',
         });
         return;
       }

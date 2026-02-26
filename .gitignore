@@ -32,8 +32,7 @@ Thumbs.db
 coverage/
 .nyc_output/
 
-# Prisma
-prisma/migrations/
+# Prisma (migrations doivent être versionnées pour le déploiement)
 
 # Firebase Service Account (sensitive credentials)
 config/firebase-service-account.json

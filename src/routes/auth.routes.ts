@@ -71,6 +71,7 @@ router.patch(
   validate(patchMeSchema),
   authController.patchMe as any,
 );
+router.delete("/me", authenticate as any, authController.deleteMe as any);
 router.get("/google", authController.googleAuth);
 router.get("/google/callback", authController.googleCallback);
 router.get("/apple", authController.appleAuth);

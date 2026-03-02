@@ -873,6 +873,33 @@ export class AuthController {
     }
   }
 
+  async deleteMe(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+        return;
+      }
+
+      await prisma.user.delete({
+        where: { id: req.user.id },
+      });
+
+      res.json({
+        success: true,
+        message: "Account deleted successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async googleAuth(
     req: Request,
     res: Response,

@@ -53,9 +53,47 @@ export const refreshTokenSchema = z.object({
 });
 
 export const patchMeSchema = z.object({
-  body: z.object({
-    profileCompleted: z.boolean(),
-  }),
+  body: z
+    .object({
+      firstName: z
+        .string()
+        .min(1, "First name is required")
+        .transform((val) => val.trim())
+        .optional(),
+      lastName: z
+        .string()
+        .min(1, "Last name is required")
+        .transform((val) => val.trim())
+        .optional(),
+      dateOfBirth: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)")
+        .optional(),
+      genderBirth: z
+        .string()
+        .transform((val) => val?.trim() || undefined)
+        .optional(),
+      genderActual: z
+        .string()
+        .transform((val) => val?.trim() || undefined)
+        .optional(),
+      profilePictureUrl: z
+        .string()
+        .url("Invalid profile picture URL")
+        .optional(),
+      profileLink: z
+        .string()
+        .transform((val) => val?.trim() || undefined)
+        .optional(),
+      profileColor: z
+        .string()
+        .transform((val) => val?.trim() || undefined)
+        .optional(),
+      profileCompleted: z.boolean().optional(),
+    })
+    .refine((data) => Object.keys(data).length > 0, {
+      message: "At least one field is required",
+    }),
 });
 
 export const forgotPasswordSchema = z.object({

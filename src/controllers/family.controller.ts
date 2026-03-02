@@ -1,15 +1,19 @@
-import { Response, NextFunction } from 'express';
-import prisma from '../config/database';
-import { AuthRequest } from '../middleware/auth';
-import { Prisma } from '@prisma/client';
+import { Response, NextFunction } from "express";
+import prisma from "../config/database";
+import { AuthRequest } from "../middleware/auth";
+import { Prisma } from "@prisma/client";
 
 export class FamilyController {
-  async getMyFamily(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async getMyFamily(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       if (!req.user || !req.user.familyId) {
         res.status(404).json({
           success: false,
-          message: 'User is not associated with a family',
+          message: "User is not associated with a family",
         });
         return;
       }
@@ -26,6 +30,8 @@ export class FamilyController {
               lastName: true,
               genderBirth: true,
               genderActual: true,
+              profilePictureUrl: true,
+              profileColor: true,
               role: true,
               userType: true,
               isActive: true,
@@ -49,7 +55,7 @@ export class FamilyController {
       if (!family) {
         res.status(404).json({
           success: false,
-          message: 'Family not found',
+          message: "Family not found",
         });
         return;
       }
@@ -63,12 +69,16 @@ export class FamilyController {
     }
   }
 
-  async getById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async getById(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       if (!req.user) {
         res.status(401).json({
           success: false,
-          message: 'Unauthorized',
+          message: "Unauthorized",
         });
         return;
       }
@@ -79,7 +89,7 @@ export class FamilyController {
       if (req.user.familyId !== idStr) {
         res.status(403).json({
           success: false,
-          message: 'Access denied: you can only view your own family',
+          message: "Access denied: you can only view your own family",
         });
         return;
       }
@@ -96,6 +106,8 @@ export class FamilyController {
               lastName: true,
               genderBirth: true,
               genderActual: true,
+              profilePictureUrl: true,
+              profileColor: true,
               role: true,
               userType: true,
               isActive: true,
@@ -107,7 +119,7 @@ export class FamilyController {
       if (!family) {
         res.status(404).json({
           success: false,
-          message: 'Family not found',
+          message: "Family not found",
         });
         return;
       }
@@ -121,12 +133,16 @@ export class FamilyController {
     }
   }
 
-  async update(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async update(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       if (!req.user) {
         res.status(401).json({
           success: false,
-          message: 'Unauthorized',
+          message: "Unauthorized",
         });
         return;
       }
@@ -137,7 +153,7 @@ export class FamilyController {
       if (req.user.familyId !== idStr) {
         res.status(403).json({
           success: false,
-          message: 'Access denied: you can only update your own family',
+          message: "Access denied: you can only update your own family",
         });
         return;
       }
@@ -146,8 +162,10 @@ export class FamilyController {
 
       const updateData: Prisma.FamilyUpdateInput = {};
       if (familyName !== undefined) updateData.familyName = familyName;
-      if (primaryContactEmail !== undefined) updateData.primaryContactEmail = primaryContactEmail;
-      if (subscriptionStatus !== undefined) updateData.subscriptionStatus = subscriptionStatus;
+      if (primaryContactEmail !== undefined)
+        updateData.primaryContactEmail = primaryContactEmail;
+      if (subscriptionStatus !== undefined)
+        updateData.subscriptionStatus = subscriptionStatus;
 
       const family = await prisma.family.update({
         where: { id: idStr },
@@ -159,7 +177,7 @@ export class FamilyController {
 
       res.json({
         success: true,
-        message: 'Family updated successfully',
+        message: "Family updated successfully",
         data: family,
       });
     } catch (error) {
@@ -167,4 +185,3 @@ export class FamilyController {
     }
   }
 }
-

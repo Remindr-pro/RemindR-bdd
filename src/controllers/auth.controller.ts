@@ -8,7 +8,7 @@ import {
   verifyRefreshToken,
 } from "../utils/jwt";
 import { AuthRequest } from "../middleware/auth";
-import { UserType } from "@prisma/client";
+import { Prisma, UserType } from "@prisma/client";
 import { PassportUser } from "../config/passport";
 import { webhookService } from "../services/webhook.service";
 import { notificationService } from "../services/notification.service";
@@ -341,6 +341,8 @@ export class AuthController {
           role: true,
           userType: true,
           profilePictureUrl: true,
+          profileLink: true,
+          profileColor: true,
           profileCompleted: true,
           familyId: true,
           createdAt: true,
@@ -584,7 +586,10 @@ export class AuthController {
         return;
       }
 
-      const isSamePassword = await comparePassword(newPassword, user.passwordHash);
+      const isSamePassword = await comparePassword(
+        newPassword,
+        user.passwordHash,
+      );
       if (isSamePassword) {
         res.status(400).json({
           success: false,
@@ -802,24 +807,58 @@ export class AuthController {
         return;
       }
 
-      const { profileCompleted } = req.body;
+      const {
+        firstName,
+        lastName,
+        dateOfBirth,
+        genderBirth,
+        genderActual,
+        profilePictureUrl,
+        profileLink,
+        profileColor,
+        profileCompleted,
+      } = req.body;
 
-      if (typeof profileCompleted !== "boolean") {
+      const updateData: Prisma.UserUpdateInput = {};
+      if (firstName !== undefined) updateData.firstName = firstName;
+      if (lastName !== undefined) updateData.lastName = lastName;
+      if (dateOfBirth !== undefined)
+        updateData.dateOfBirth = new Date(dateOfBirth);
+      if (genderBirth !== undefined)
+        updateData.genderBirth = genderBirth || null;
+      if (genderActual !== undefined)
+        updateData.genderActual = genderActual || null;
+      if (profilePictureUrl !== undefined)
+        updateData.profilePictureUrl = profilePictureUrl || null;
+      if (profileLink !== undefined)
+        updateData.profileLink = profileLink || null;
+      if (profileColor !== undefined)
+        updateData.profileColor = profileColor || null;
+      if (profileCompleted !== undefined)
+        updateData.profileCompleted = profileCompleted;
+
+      if (Object.keys(updateData).length === 0) {
         res.status(400).json({
           success: false,
-          message: "profileCompleted must be a boolean",
+          message: "No valid field provided",
         });
         return;
       }
 
       const user = await prisma.user.update({
         where: { id: req.user.id },
-        data: { profileCompleted },
+        data: updateData,
         select: {
           id: true,
           email: true,
           firstName: true,
           lastName: true,
+          dateOfBirth: true,
+          genderBirth: true,
+          genderActual: true,
+          profilePictureUrl: true,
+          profileLink: true,
+          profileColor: true,
           profileCompleted: true,
         },
       });

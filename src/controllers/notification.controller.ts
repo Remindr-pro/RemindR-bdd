@@ -13,10 +13,36 @@ export class NotificationController {
         return;
       }
 
-      const { limit = 50, offset = 0 } = req.query;
+      const { limit = 50, offset = 0, userId } = req.query;
+      let targetUserId = req.user.id;
+
+      if (typeof userId === 'string' && userId !== req.user.id) {
+        if (!req.user.familyId) {
+          res.status(403).json({
+            success: false,
+            message: 'Access denied',
+          });
+          return;
+        }
+
+        const targetUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { familyId: true },
+        });
+
+        if (!targetUser || targetUser.familyId !== req.user.familyId) {
+          res.status(403).json({
+            success: false,
+            message: 'Access denied',
+          });
+          return;
+        }
+
+        targetUserId = userId;
+      }
 
       const notifications = await prisma.notificationLog.findMany({
-        where: { userId: req.user.id },
+        where: { userId: targetUserId },
         include: {
           reminder: {
             select: {

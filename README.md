@@ -1,353 +1,167 @@
-# RemindR API - Backend
+# RemindR – API Backend
 
-API Backend pour l'application de santé RemindR, construite avec Node.js, Express, PostgreSQL, Prisma et TypeScript.
+Backend de l'app RemindR, une application de suivi santé familiale. Construit avec Node.js, Express, PostgreSQL et Prisma.
 
-## 🚀 Stack Technique
+## Contexte du projet
 
-### Backend/API
-- **Node.js** avec **Express**
-- **PostgreSQL** comme SGBD
-- **Prisma** comme ORM
-- **Zod** pour la validation
-- **TypeScript** pour le typage
-- API **REST**
+RemindR permet aux familles de gérer leurs rappels de santé (vaccins, rendez-vous, prises de médicaments, etc.) et de centraliser les infos utiles (profils santé, documents mutuelle, recommandations personnalisées). Cette API sert de backend pour l'app mobile et le futur portail web.
 
-### Authentification
-- **JWT** (JSON Web Tokens)
-- **OAuth2** (Google, Apple) - À implémenter
-- **bcrypt** pour le chiffrement des mots de passe
-- **pgcrypto** pour la sécurité des données
+## Stack technique
 
-### Queue/Notifications
-- **Redis** + **Bull Queue** pour la gestion des queues
-- **Firebase Cloud Messaging** pour les push notifications
-- **SendGrid** pour les emails
-- **Twilio** pour les SMS
+- **Node.js** + **Express** + **TypeScript**
+- **PostgreSQL** (via Prisma)
+- **Redis** + **Bull** pour les queues (notifications, rappels)
+- **JWT** pour l’auth, **bcrypt** pour les mots de passe
+- **Zod** pour la validation des entrées
+- **Swagger** pour la doc API (`/api-docs`)
 
-### Infrastructure
-- **Docker** pour la conteneurisation
-- **Docker Compose** pour l'orchestration
-- **GitHub Actions** pour le CI/CD avec déploiement automatique
-- **Grafana** pour le monitoring (à configurer)
+OAuth2 (Google, Apple) est prévu dans les routes mais pas encore branché côté front. Firebase, SendGrid et Twilio sont configurés pour les notifs (emails, SMS, push).
 
-## 📋 Prérequis
+## Prérequis
 
 - Node.js 20+
 - PostgreSQL 16+
-- Redis 7+
-- Docker & Docker Compose (optionnel)
+- Redis (optionnel en dev si tu ne lances pas les jobs de rappels)
 
-## 🛠️ Installation
+Docker est pratique pour lancer Postgres et Redis sans les installer en local.
 
-> 📖 **Guide détaillé** : Consultez [SETUP.md](./SETUP.md) pour un guide complet de configuration.
-
-### Démarrage Rapide
-
-#### Option 1 : Avec Docker Compose (Recommandé)
+## Installation
 
 ```bash
-# 1. Créer le fichier .env
-cp env.example .env
-# Éditer .env avec vos valeurs
+# 1. Cloner et installer les deps
+npm install
 
-# 2. Démarrer PostgreSQL et Redis
+# 2. Fichier .env
+cp env.example .env
+# Éditer .env avec ta DATABASE_URL et les secrets JWT
+
+# 3. Base de données
+npm run prisma:generate
+npm run prisma:migrate
+
+# 4. (Optionnel) Données de test
+npm run prisma:seed
+
+# 5. Lancer l'API
+npm run dev
+```
+
+L’API tourne sur `http://localhost:3000`. La doc Swagger est dispo sur `http://localhost:3000/api-docs`.
+
+### Avec Docker pour Postgres + Redis
+
+```bash
 docker-compose up -d postgres redis
-
-# 3. Installer les dépendances
-npm install
-
-# 4. Initialiser Prisma
-npm run prisma:generate
-npm run prisma:migrate
-
-# 5. (Optionnel) Peupler la base de données
-npm run prisma:seed
-
-# 6. Démarrer l'API
-npm run dev
+# Puis npm run dev comme ci-dessus
 ```
 
-#### Option 2 : PostgreSQL Local
+### Variables d'environnement importantes
 
-Si vous avez PostgreSQL installé localement :
+Dans `.env` :
 
-```bash
-# 1. Créer la base de données
-psql -U postgres
-CREATE DATABASE remindr_db;
-CREATE USER remindr WITH PASSWORD 'remindr_password';
-GRANT ALL PRIVILEGES ON DATABASE remindr_db TO remindr;
-\q
+- `DATABASE_URL` – connexion PostgreSQL
+- `JWT_SECRET` et `JWT_REFRESH_SECRET` – à changer en prod
+- `REDIS_HOST`, `REDIS_PORT` – pour les queues (optionnel en dev)
+- `CORS_ORIGIN` – origines autorisées (ex: `http://localhost:5173`)
 
-# 2. Créer le fichier .env
-cp env.example .env
-# Éditer .env avec vos valeurs
+Le reste (SendGrid, Twilio, Firebase, Sentry) peut rester vide en dev.
 
-# 3. Installer les dépendances
-npm install
+## Endpoints principaux
 
-# 4. Initialiser Prisma
-npm run prisma:generate
-npm run prisma:migrate
-
-# 5. Démarrer l'API
-npm run dev
-```
-
-### Configuration de l'environnement
-
-Créer un fichier `.env` à la racine du projet :
-
-```env
-# Server Configuration
-NODE_ENV=development
-PORT=3000
-API_VERSION=v1
-
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/remindr_db?schema=public
-
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
-JWT_EXPIRES_IN=7d
-JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-in-production
-JWT_REFRESH_EXPIRES_IN=30d
-
-# Redis Configuration
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
-
-# Firebase Cloud Messaging
-FCM_SERVER_KEY=your-fcm-server-key
-FCM_PROJECT_ID=your-fcm-project-id
-
-# SendGrid Email
-SENDGRID_API_KEY=your-sendgrid-api-key
-SENDGRID_FROM_EMAIL=noreply@remindr.app
-
-# Twilio SMS
-TWILIO_ACCOUNT_SID=your-twilio-account-sid
-TWILIO_AUTH_TOKEN=your-twilio-auth-token
-TWILIO_PHONE_NUMBER=+1234567890
-
-# CORS
-CORS_ORIGIN=http://localhost:3000,http://localhost:5173
-```
-
-### 4. Configuration de la base de données
-
-```bash
-# Générer le client Prisma
-npm run prisma:generate
-
-# Créer les migrations
-npm run prisma:migrate
-
-# (Optionnel) Peupler la base de données avec des données de test
-npm run prisma:seed
-```
-
-## 🚀 Démarrage
-
-### Mode développement
-
-```bash
-npm run dev
-```
-
-Le serveur démarre sur `http://localhost:3000`
-
-### Mode production
-
-```bash
-# Build
-npm run build
-
-# Start
-npm start
-```
-
-### Avec Docker
-
-```bash
-# Démarrer tous les services (PostgreSQL, Redis, API)
-docker-compose up -d
-
-# Voir les logs
-docker-compose logs -f api
-
-# Arrêter les services
-docker-compose down
-```
-
-## 📚 API Endpoints
-
-### Authentification
-- `POST /api/v1/auth/register` - Inscription
-- `POST /api/v1/auth/login` - Connexion
-- `POST /api/v1/auth/refresh` - Rafraîchir le token
-- `POST /api/v1/auth/logout` - Déconnexion
-- `GET /api/v1/auth/me` - Informations utilisateur connecté
+### Auth
+- `POST /api/v1/auth/register` – Inscription
+- `POST /api/v1/auth/login` – Connexion
+- `POST /api/v1/auth/verify-identity` – Vérification par numéro d’adhérent (mutuelle)
+- `POST /api/v1/auth/refresh` – Rafraîchir le token
+- `GET /api/v1/auth/me` – Profil connecté
 
 ### Utilisateurs
-- `GET /api/v1/users` - Liste des utilisateurs
-- `GET /api/v1/users/:id` - Détails d'un utilisateur
-- `PUT /api/v1/users/:id` - Mettre à jour un utilisateur
-- `DELETE /api/v1/users/:id` - Supprimer un utilisateur
-
-### Rappels (Reminders)
-- `GET /api/v1/reminders` - Liste des rappels de l'utilisateur
-- `GET /api/v1/reminders/:id` - Détails d'un rappel
-- `POST /api/v1/reminders` - Créer un rappel
-- `PUT /api/v1/reminders/:id` - Mettre à jour un rappel
-- `DELETE /api/v1/reminders/:id` - Supprimer un rappel
-- `PATCH /api/v1/reminders/:id/toggle` - Activer/Désactiver un rappel
-
-### Profils de santé
-- `GET /api/v1/health-profiles/me` - Mon profil de santé
-- `GET /api/v1/health-profiles/:userId` - Profil de santé d'un utilisateur
-- `POST /api/v1/health-profiles` - Créer un profil de santé
-- `PUT /api/v1/health-profiles/:id` - Mettre à jour un profil de santé
-
-### Articles
-- `GET /api/v1/articles` - Liste des articles
-- `GET /api/v1/articles/:id` - Détails d'un article
-- `GET /api/v1/articles/category/:categoryId` - Articles par catégorie
-- `POST /api/v1/articles` - Créer un article (admin/editor)
-- `PUT /api/v1/articles/:id` - Mettre à jour un article (admin/editor)
-- `DELETE /api/v1/articles/:id` - Supprimer un article (admin/editor)
-- `PATCH /api/v1/articles/:id/publish` - Publier un article (admin/editor)
-
-### Recommandations
-- `GET /api/v1/recommendations` - Liste des recommandations
-- `GET /api/v1/recommendations/:id` - Détails d'une recommandation
-- `POST /api/v1/recommendations/:id/dismiss` - Ignorer une recommandation
-- `POST /api/v1/recommendations/:id/click` - Enregistrer un clic
-
-### Notifications
-- `GET /api/v1/notifications` - Liste des notifications
-- `GET /api/v1/notifications/:id` - Détails d'une notification
-- `PATCH /api/v1/notifications/:id/read` - Marquer comme lu
-
-### Questionnaire
-- `GET /api/v1/questionnary/me` - Mon questionnaire
-- `POST /api/v1/questionnary` - Créer un questionnaire
-- `PUT /api/v1/questionnary/:id` - Mettre à jour un questionnaire
+- `GET /api/v1/users` – Liste (admin/pro)
+- `GET /api/v1/users/:id` – Détail
+- `PUT /api/v1/users/:id` – Mise à jour
 
 ### Familles
-- `GET /api/v1/families/me` - Ma famille
-- `GET /api/v1/families/:id` - Détails d'une famille
-- `PUT /api/v1/families/:id` - Mettre à jour une famille
+- `GET /api/v1/families/me` – Ma famille (avec profils santé des membres)
+- `PUT /api/v1/families/:id` – Mise à jour
 
-## 🔐 Authentification
+### Rappels
+- `GET /api/v1/reminders` – Mes rappels
+- `GET /api/v1/reminders/calendar` – Calendrier familial
+- `POST /api/v1/reminders` – Créer
+- `PUT /api/v1/reminders/:id` – Modifier
+- `PATCH /api/v1/reminders/:id/toggle` – Activer / désactiver
 
-La plupart des endpoints nécessitent une authentification via JWT. Inclure le token dans le header :
+### Profils santé
+- `GET /api/v1/health-profiles/me` – Mon profil
+- `GET /api/v1/health-profiles/:userId` – Profil d’un membre (famille)
+- `POST /api/v1/health-profiles` – Créer
+- `PUT /api/v1/health-profiles/:id` – Modifier
+
+### Articles
+- `GET /api/v1/articles` – Liste
+- `GET /api/v1/articles/:id` – Détail
+- `GET /api/v1/articles/category/:categoryId` – Par catégorie
+
+### Recommandations
+- `GET /api/v1/recommendations` – Liste
+- `POST /api/v1/recommendations/:id/dismiss` – Ignorer
+- `POST /api/v1/recommendations/:id/click` – Enregistrer un clic
+
+### Documents (factures mutuelle)
+- `GET /api/v1/documents` – Mes documents
+- `POST /api/v1/documents` – Upload
+- `POST /api/v1/documents/:id/send-to-mutuelle` – Envoyer à la mutuelle
+
+### Analytics (B2B)
+- `GET /api/v1/analytics/dashboard` – Dashboard métriques (mutuelles, partenaires)
+
+### Autres
+- `GET /api/v1/notifications` – Notifications
+- `GET /api/v1/questionnary/me` – Mon questionnaire
+- `POST /api/v1/questionnary` – Créer / mettre à jour
+
+Tous les endpoints protégés attendent un header `Authorization: Bearer <token>`.
+
+## Structure du projet
 
 ```
-Authorization: Bearer <your-jwt-token>
+src/
+├── config/        # Swagger, Sentry, logger, passport
+├── controllers/   # Logique métier
+├── middleware/    # Auth, validation, rate limit
+├── routes/        # Routes Express
+├── services/      # Queue, notifications
+├── jobs/          # Scheduler des rappels
+└── utils/         # Helpers
+prisma/
+├── schema.prisma  # Modèles
+├── migrations/
+└── seed.ts
 ```
 
-## 📊 Structure de la Base de Données
+## Scripts utiles
 
-Le schéma Prisma est défini dans `prisma/schema.prisma`. Les principales tables sont :
+| Commande | Description |
+|----------|-------------|
+| `npm run dev` | Démarrage en dev (hot reload) |
+| `npm run build` | Build TypeScript |
+| `npm start` | Démarrage en prod |
+| `npm run prisma:studio` | Interface Prisma sur la BDD |
+| `npm run prisma:seed` | Peupler la BDD |
+| `npm run lint` | Linter |
+| `npm test` | Tests |
 
-- `insurance_companies` - Compagnies d'assurance
-- `families` - Familles
-- `users` - Utilisateurs
-- `health_profiles` - Profils de santé
-- `reminder_types` - Types de rappels
-- `reminders` - Rappels
-- `article_categories` - Catégories d'articles
-- `articles` - Articles
-- `partners` - Partenaires
-- `recommendations` - Recommandations
-- `notification_logs` - Logs de notifications
-- `questionnary` - Questionnaires
+## Base de données
 
-## 🧪 Tests
+Le schéma est dans `prisma/schema.prisma`. Tables principales : `users`, `families`, `health_profiles`, `reminders`, `reminder_types`, `articles`, `recommendations`, `documents`, `insurance_companies`, etc.
 
-```bash
-# Lancer les tests
-npm test
+## Ce qui reste à faire
 
-# Tests en mode watch
-npm run test:watch
-```
+- Brancher OAuth2 Google/Apple côté front
+- Tests unitaires / d’intégration (structure Jest en place)
+- Config Grafana pour le monitoring (Docker Compose dispo)
+- Webhooks pour les partenaires externes
 
-## 🔍 Linting
-
-```bash
-npm run lint
-```
-
-## 📝 Scripts Disponibles
-
-- `npm run dev` - Démarrage en mode développement avec hot-reload
-- `npm run build` - Compilation TypeScript
-- `npm start` - Démarrage en mode production
-- `npm run prisma:generate` - Générer le client Prisma
-- `npm run prisma:migrate` - Créer/appliquer les migrations
-- `npm run prisma:studio` - Ouvrir Prisma Studio
-- `npm run prisma:seed` - Peupler la base de données
-- `npm run lint` - Linter le code
-- `npm test` - Lancer les tests
-
-## 🐳 Docker
-
-### Build de l'image
-
-```bash
-docker build -t remindr-api .
-```
-
-### Docker Compose
-
-Le fichier `docker-compose.yml` configure :
-- PostgreSQL (port 5432)
-- Redis (port 6379)
-- API (port 3000)
-
-## 🔄 CI/CD
-
-Le pipeline GitHub Actions (`/.github/workflows/ci.yml`) :
-- ✅ Lance les tests automatiquement
-- ✅ Vérifie le linting
-- ✅ Build et publie l'image Docker sur Docker Hub (sur push vers main)
-- ✅ Déploiement automatique configuré
-
-> 📖 **Guide de déploiement** : Consultez [DEPLOYMENT.md](./DEPLOYMENT.md) pour configurer le déploiement automatique.
-
-## 📦 Dépendances Principales
-
-- **express** - Framework web
-- **@prisma/client** - Client Prisma ORM
-- **zod** - Validation de schémas
-- **jsonwebtoken** - JWT
-- **bcrypt** - Hashage de mots de passe
-- **bull** - Queue management
-- **ioredis** - Client Redis
-- **firebase-admin** - Firebase Cloud Messaging
-- **@sendgrid/mail** - Envoi d'emails
-- **twilio** - Envoi de SMS
-- **helmet** - Sécurité HTTP
-- **cors** - Gestion CORS
-- **express-rate-limit** - Rate limiting
-
-## 🚧 À Implémenter
-
-- [ ] OAuth2 Google/Apple
-- [ ] Tests unitaires et d'intégration
-- [ ] Configuration Grafana pour le monitoring
-- [ ] Documentation API complète (Swagger/OpenAPI)
-- [ ] Webhooks
-- [ ] Cache avec Redis
-- [ ] Logging avancé (Winston/Pino)
-
-## 📄 Licence
+## Licence
 
 ISC
-
-## 👥 Contribution
-
-Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou une pull request.

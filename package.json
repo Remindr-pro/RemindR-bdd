@@ -1,7 +1,7 @@
 {
   "name": "remindr-api",
   "version": "1.0.0",
-  "description": "API Backend for RemindR health application",
+  "description": "Backend API pour RemindR - app de suivi santé familiale",
   "main": "dist/src/server.js",
   "scripts": {
     "dev": "node scripts/kill-port.js 3000 && node scripts/start-services.js && tsx watch src/server.ts",

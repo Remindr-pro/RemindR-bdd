@@ -1,22 +1,41 @@
-import crypto from 'node:crypto';
-import { Request, Response, NextFunction } from 'express';
-import prisma from '../config/database';
-import { hashPassword, comparePassword } from '../utils/bcrypt';
-import { generateToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
-import { AuthRequest } from '../middleware/auth';
-import { UserType } from '@prisma/client';
-import { PassportUser } from '../config/passport';
-import { webhookService } from '../services/webhook.service';
-import { notificationService } from '../services/notification.service';
-import { oauth2Config } from '../config/jwt';
-import jwt from 'jsonwebtoken';
-import passport from '../config/passport';
-import { getAppleUserInfo } from '../utils/appleAuth';
+import crypto from "node:crypto";
+import { Request, Response, NextFunction } from "express";
+import prisma from "../config/database";
+import { hashPassword, comparePassword } from "../utils/bcrypt";
+import {
+  generateToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../utils/jwt";
+import { AuthRequest } from "../middleware/auth";
+import { UserType } from "@prisma/client";
+import { PassportUser } from "../config/passport";
+import { webhookService } from "../services/webhook.service";
+import { notificationService } from "../services/notification.service";
+import { oauth2Config } from "../config/jwt";
+import jwt from "jsonwebtoken";
+import passport from "../config/passport";
+import { getAppleUserInfo } from "../utils/appleAuth";
 
 export class AuthController {
-  async register(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async register(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
-      const { email, password, firstName, lastName, phoneNumber, dateOfBirth, genderBirth, genderActual, familyId, userType } = req.body;
+      const {
+        email,
+        password,
+        firstName,
+        lastName,
+        phoneNumber,
+        dateOfBirth,
+        genderBirth,
+        genderActual,
+        familyId,
+        userType,
+      } = req.body;
 
       const existingUser = await prisma.user.findUnique({
         where: { email },
@@ -25,7 +44,7 @@ export class AuthController {
       if (existingUser) {
         res.status(409).json({
           success: false,
-          message: 'User with this email already exists',
+          message: "User with this email already exists",
         });
         return;
       }
@@ -37,7 +56,7 @@ export class AuthController {
         if (!familyExists) {
           res.status(400).json({
             success: false,
-            message: 'Family ID does not exist',
+            message: "Family ID does not exist",
           });
           return;
         }
@@ -86,7 +105,7 @@ export class AuthController {
         familyId: user.familyId,
       });
 
-      await webhookService.triggerWebhook('user.created', {
+      await webhookService.triggerWebhook("user.created", {
         userId: user.id,
         email: user.email,
         userType: user.userType,
@@ -94,7 +113,7 @@ export class AuthController {
 
       res.status(201).json({
         success: true,
-        message: 'User registered successfully',
+        message: "User registered successfully",
         data: {
           user,
           token,
@@ -117,25 +136,29 @@ export class AuthController {
       if (!user || !user.isActive) {
         res.status(401).json({
           success: false,
-          message: 'Invalid credentials',
+          message: "Invalid credentials",
         });
         return;
       }
 
-      if (!user.passwordHash || user.passwordHash === '') {
+      if (!user.passwordHash || user.passwordHash === "") {
         res.status(401).json({
           success: false,
-          message: 'This account uses social login. Please sign in with Google or Apple.',
+          message:
+            "This account uses social login. Please sign in with Google or Apple.",
         });
         return;
       }
 
-      const isValidPassword = await comparePassword(password, user.passwordHash);
+      const isValidPassword = await comparePassword(
+        password,
+        user.passwordHash,
+      );
 
       if (!isValidPassword) {
         res.status(401).json({
           success: false,
-          message: 'Invalid credentials',
+          message: "Invalid credentials",
         });
         return;
       }
@@ -158,7 +181,7 @@ export class AuthController {
 
       res.json({
         success: true,
-        message: 'Login successful',
+        message: "Login successful",
         data: {
           user: {
             id: user.id,
@@ -179,14 +202,18 @@ export class AuthController {
     }
   }
 
-  async refreshToken(req: Request, res: Response, _next: NextFunction): Promise<void> {
+  async refreshToken(
+    req: Request,
+    res: Response,
+    _next: NextFunction,
+  ): Promise<void> {
     try {
       const { refreshToken } = req.body;
 
       if (!refreshToken) {
         res.status(400).json({
           success: false,
-          message: 'Refresh token is required',
+          message: "Refresh token is required",
         });
         return;
       }
@@ -208,7 +235,7 @@ export class AuthController {
       if (!user || !user.isActive) {
         res.status(401).json({
           success: false,
-          message: 'Invalid refresh token',
+          message: "Invalid refresh token",
         });
         return;
       }
@@ -239,24 +266,28 @@ export class AuthController {
     } catch {
       res.status(401).json({
         success: false,
-        message: 'Invalid refresh token',
+        message: "Invalid refresh token",
       });
       return;
     }
   }
 
-  async logout(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async logout(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
+      if (authHeader && authHeader.startsWith("Bearer ")) {
         const token = authHeader.substring(7);
-        
+
         try {
           const decoded = jwt.decode(token) as { exp?: number } | null;
-          
+
           if (decoded && decoded.exp) {
             const expiresAt = new Date(decoded.exp * 1000);
-            
+
             try {
               await prisma.tokenBlacklist.create({
                 data: {
@@ -275,19 +306,23 @@ export class AuthController {
 
       res.json({
         success: true,
-        message: 'Logout successful',
+        message: "Logout successful",
       });
     } catch (error) {
       next(error);
     }
   }
 
-  async getMe(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async getMe(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       if (!req.user) {
         res.status(401).json({
           success: false,
-          message: 'Unauthorized',
+          message: "Unauthorized",
         });
         return;
       }
@@ -321,15 +356,20 @@ export class AuthController {
     }
   }
 
-  async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async forgotPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { email } = req.body;
-      const emailStr = typeof email === 'string' ? email.trim().toLowerCase() : '';
+      const emailStr =
+        typeof email === "string" ? email.trim().toLowerCase() : "";
 
       if (!emailStr) {
         res.status(400).json({
           success: false,
-          message: 'Email is required',
+          message: "Email is required",
         });
         return;
       }
@@ -338,15 +378,16 @@ export class AuthController {
         where: { email: emailStr },
       });
 
-      if (!user || !user.passwordHash || user.passwordHash === '') {
+      if (!user || !user.passwordHash || user.passwordHash === "") {
         res.json({
           success: true,
-          message: 'If an account exists with this email, you will receive a password reset link.',
+          message:
+            "If an account exists with this email, you will receive a password reset link.",
         });
         return;
       }
 
-      const token = crypto.randomBytes(32).toString('hex');
+      const token = crypto.randomBytes(32).toString("hex");
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
       await prisma.passwordResetToken.deleteMany({
@@ -361,42 +402,51 @@ export class AuthController {
         },
       });
 
-      const frontendUrl = process.env.FRONTEND_URL || 'https://remind-r.com';
+      const frontendUrl = process.env.FRONTEND_URL || "https://remind-r.com";
       const resetLink = `${frontendUrl}/connexion/reinitialiser-mot-de-passe?token=${token}`;
 
       await notificationService.sendEmail({
         userId: user.id,
         email: user.email,
-        notificationType: 'email',
-        title: 'Réinitialisation de votre mot de passe - RemindR',
+        notificationType: "email",
+        title: "Réinitialisation de votre mot de passe - RemindR",
         message: `Bonjour ${user.firstName},\n\nVous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le lien ci-dessous pour définir un nouveau mot de passe :\n\n${resetLink}\n\nCe lien expire dans 1 heure.\n\nSi vous n'avez pas fait cette demande, ignorez cet email.\n\nL'équipe RemindR`,
       });
 
       res.json({
         success: true,
-        message: 'If an account exists with this email, you will receive a password reset link.',
+        message:
+          "If an account exists with this email, you will receive a password reset link.",
       });
     } catch (error) {
       next(error);
     }
   }
 
-  async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async resetPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { token, newPassword } = req.body;
 
-      if (!token || typeof token !== 'string') {
+      if (!token || typeof token !== "string") {
         res.status(400).json({
           success: false,
-          message: 'Token is required',
+          message: "Token is required",
         });
         return;
       }
 
-      if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
+      if (
+        !newPassword ||
+        typeof newPassword !== "string" ||
+        newPassword.length < 8
+      ) {
         res.status(400).json({
           success: false,
-          message: 'Password must be at least 8 characters',
+          message: "Password must be at least 8 characters",
         });
         return;
       }
@@ -409,7 +459,7 @@ export class AuthController {
       if (!resetToken || resetToken.expiresAt < new Date()) {
         res.status(400).json({
           success: false,
-          message: 'Invalid or expired reset token',
+          message: "Invalid or expired reset token",
         });
         return;
       }
@@ -428,21 +478,149 @@ export class AuthController {
 
       res.json({
         success: true,
-        message: 'Password has been reset successfully. You can now log in with your new password.',
+        message:
+          "Password has been reset successfully. You can now log in with your new password.",
       });
     } catch (error) {
       next(error);
     }
   }
 
-  async activateAccount(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async verifyPassword(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+        return;
+      }
+
+      const { currentPassword } = req.body;
+
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: {
+          passwordHash: true,
+        },
+      });
+
+      if (!user || !user.passwordHash || user.passwordHash === "") {
+        res.status(400).json({
+          success: false,
+          message: "Password verification is not available for this account",
+        });
+        return;
+      }
+
+      const isValidPassword = await comparePassword(
+        currentPassword,
+        user.passwordHash,
+      );
+
+      if (!isValidPassword) {
+        res.status(400).json({
+          success: false,
+          message: "L'ancien mot de passe est incorrect",
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        message: "Password verified successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async changePassword(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+        return;
+      }
+
+      const { currentPassword, newPassword } = req.body;
+
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: {
+          id: true,
+          passwordHash: true,
+        },
+      });
+
+      if (!user || !user.passwordHash || user.passwordHash === "") {
+        res.status(400).json({
+          success: false,
+          message: "Password change is not available for this account",
+        });
+        return;
+      }
+
+      const isValidPassword = await comparePassword(
+        currentPassword,
+        user.passwordHash,
+      );
+
+      if (!isValidPassword) {
+        res.status(400).json({
+          success: false,
+          message: "L'ancien mot de passe est incorrect",
+        });
+        return;
+      }
+
+      const isSamePassword = await comparePassword(newPassword, user.passwordHash);
+      if (isSamePassword) {
+        res.status(400).json({
+          success: false,
+          message: "New password must be different from current password",
+        });
+        return;
+      }
+
+      const passwordHash = await hashPassword(newPassword);
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash },
+      });
+
+      res.json({
+        success: true,
+        message: "Password updated successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async activateAccount(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { token } = req.body;
 
-      if (!token || typeof token !== 'string') {
+      if (!token || typeof token !== "string") {
         res.status(400).json({
           success: false,
-          message: 'Token is required',
+          message: "Token is required",
         });
         return;
       }
@@ -455,7 +633,7 @@ export class AuthController {
       if (!activationToken || activationToken.expiresAt < new Date()) {
         res.status(400).json({
           success: false,
-          message: 'Invalid or expired activation token',
+          message: "Invalid or expired activation token",
         });
         return;
       }
@@ -472,21 +650,25 @@ export class AuthController {
 
       res.json({
         success: true,
-        message: 'Account activated successfully. You can now log in.',
+        message: "Account activated successfully. You can now log in.",
       });
     } catch (error) {
       next(error);
     }
   }
 
-  async verifyIdentity(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async verifyIdentity(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { memberNumber, dateOfBirth, email } = req.body;
 
       if (!memberNumber || !dateOfBirth || !email) {
         res.status(400).json({
           success: false,
-          message: 'memberNumber, dateOfBirth and email are required',
+          message: "memberNumber, dateOfBirth and email are required",
         });
         return;
       }
@@ -509,14 +691,15 @@ export class AuthController {
       if (!user) {
         res.status(404).json({
           success: false,
-          message: 'No account found matching the provided credentials. Please check your member number, date of birth and email.',
+          message:
+            "No account found matching the provided credentials. Please check your member number, date of birth and email.",
         });
         return;
       }
 
       res.json({
         success: true,
-        message: 'Identity verified successfully',
+        message: "Identity verified successfully",
         data: {
           userId: user.id,
           email: user.email,
@@ -530,15 +713,20 @@ export class AuthController {
     }
   }
 
-  async resendActivation(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async resendActivation(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { email } = req.body;
-      const emailStr = typeof email === 'string' ? email.trim().toLowerCase() : '';
+      const emailStr =
+        typeof email === "string" ? email.trim().toLowerCase() : "";
 
       if (!emailStr) {
         res.status(400).json({
           success: false,
-          message: 'Email is required',
+          message: "Email is required",
         });
         return;
       }
@@ -550,7 +738,8 @@ export class AuthController {
       if (!user) {
         res.json({
           success: true,
-          message: 'If an account exists with this email, you will receive an activation link.',
+          message:
+            "If an account exists with this email, you will receive an activation link.",
         });
         return;
       }
@@ -558,12 +747,12 @@ export class AuthController {
       if (user.isActive) {
         res.json({
           success: true,
-          message: 'Account is already activated. You can log in.',
+          message: "Account is already activated. You can log in.",
         });
         return;
       }
 
-      const token = crypto.randomBytes(32).toString('hex');
+      const token = crypto.randomBytes(32).toString("hex");
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
       await prisma.activationToken.deleteMany({
@@ -578,42 +767,47 @@ export class AuthController {
         },
       });
 
-      const frontendUrl = process.env.FRONTEND_URL || 'https://remind-r.com';
+      const frontendUrl = process.env.FRONTEND_URL || "https://remind-r.com";
       const activationLink = `${frontendUrl}/bienvenue/activer?token=${token}`;
 
       await notificationService.sendEmail({
         userId: user.id,
         email: user.email,
-        notificationType: 'email',
-        title: 'Activez votre compte RemindR',
+        notificationType: "email",
+        title: "Activez votre compte RemindR",
         message: `Bonjour ${user.firstName},\n\nCliquez sur le lien ci-dessous pour activer votre compte :\n\n${activationLink}\n\nCe lien expire dans 24 heures.\n\nL'équipe RemindR`,
       });
 
       res.json({
         success: true,
-        message: 'If an account exists with this email, you will receive an activation link.',
+        message:
+          "If an account exists with this email, you will receive an activation link.",
       });
     } catch (error) {
       next(error);
     }
   }
 
-  async patchMe(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async patchMe(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       if (!req.user) {
         res.status(401).json({
           success: false,
-          message: 'Unauthorized',
+          message: "Unauthorized",
         });
         return;
       }
 
       const { profileCompleted } = req.body;
 
-      if (typeof profileCompleted !== 'boolean') {
+      if (typeof profileCompleted !== "boolean") {
         res.status(400).json({
           success: false,
-          message: 'profileCompleted must be a boolean',
+          message: "profileCompleted must be a boolean",
         });
         return;
       }
@@ -632,7 +826,7 @@ export class AuthController {
 
       res.json({
         success: true,
-        message: 'Profile updated successfully',
+        message: "Profile updated successfully",
         data: user,
       });
     } catch (error) {
@@ -640,109 +834,134 @@ export class AuthController {
     }
   }
 
-  async googleAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async googleAuth(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       if (!oauth2Config.google.clientId || !oauth2Config.google.clientSecret) {
         res.status(503).json({
           success: false,
-          message: 'Google OAuth2 is not configured',
+          message: "Google OAuth2 is not configured",
         });
         return;
       }
 
-      passport.authenticate('google', {
-        scope: ['profile', 'email'],
-        state: req.query.redirect_uri as string || undefined,
+      passport.authenticate("google", {
+        scope: ["profile", "email"],
+        state: (req.query.redirect_uri as string) || undefined,
       })(req, res, next);
     } catch (error) {
       next(error);
     }
   }
 
-  async googleCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async googleCallback(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       if (!oauth2Config.google.clientId || !oauth2Config.google.clientSecret) {
         res.status(503).json({
           success: false,
-          message: 'Google OAuth2 is not configured',
+          message: "Google OAuth2 is not configured",
         });
         return;
       }
 
-      passport.authenticate('google', { session: false }, async (err: Error | null, passportUser: PassportUser | undefined) => {
-        if (err || !passportUser) {
-          res.status(401).json({
-            success: false,
-            message: 'Google authentication failed',
+      passport.authenticate(
+        "google",
+        { session: false },
+        async (err: Error | null, passportUser: PassportUser | undefined) => {
+          if (err || !passportUser) {
+            res.status(401).json({
+              success: false,
+              message: "Google authentication failed",
+            });
+            return;
+          }
+
+          const user = passportUser;
+
+          if (!user.isActive) {
+            res.status(403).json({
+              success: false,
+              message: "User account is inactive",
+            });
+            return;
+          }
+
+          const token = generateToken({
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            userType: user.userType,
+            familyId: user.familyId,
           });
-          return;
-        }
 
-        const user = passportUser;
-
-        if (!user.isActive) {
-          res.status(403).json({
-            success: false,
-            message: 'User account is inactive',
+          const refreshToken = generateRefreshToken({
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            userType: user.userType,
+            familyId: user.familyId,
           });
-          return;
-        }
 
-        const token = generateToken({
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          userType: user.userType,
-          familyId: user.familyId,
-        });
-
-        const refreshToken = generateRefreshToken({
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          userType: user.userType,
-          familyId: user.familyId,
-        });
-
-        const redirectUri = req.query.state as string || process.env.FRONTEND_URL || 'http://localhost:3000';
-        const separator = redirectUri.includes('?') ? '&' : '?';
-        res.redirect(`${redirectUri}${separator}token=${token}&refreshToken=${refreshToken}`);
-      })(req, res, next);
+          const redirectUri =
+            (req.query.state as string) ||
+            process.env.FRONTEND_URL ||
+            "http://localhost:3000";
+          const separator = redirectUri.includes("?") ? "&" : "?";
+          res.redirect(
+            `${redirectUri}${separator}token=${token}&refreshToken=${refreshToken}`,
+          );
+        },
+      )(req, res, next);
     } catch (error) {
       next(error);
     }
   }
 
-  async appleAuth(req: Request, res: Response, _next: NextFunction): Promise<void> {
+  async appleAuth(
+    req: Request,
+    res: Response,
+    _next: NextFunction,
+  ): Promise<void> {
     try {
       if (!oauth2Config.apple.clientId) {
         res.status(503).json({
           success: false,
-          message: 'Apple OAuth2 is not configured',
+          message: "Apple OAuth2 is not configured",
         });
         return;
       }
 
       const redirectUri = encodeURIComponent(oauth2Config.apple.redirectUri);
       const clientId = oauth2Config.apple.clientId;
-      const state = req.query.redirect_uri as string || '';
+      const state = (req.query.redirect_uri as string) || "";
       const appleAuthUrl = `https://appleid.apple.com/auth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=email%20name&response_mode=form_post&state=${encodeURIComponent(state)}`;
 
       res.redirect(appleAuthUrl);
     } catch {
       res.status(500).json({
         success: false,
-        message: 'Failed to initiate Apple authentication',
+        message: "Failed to initiate Apple authentication",
       });
     }
   }
 
-  async appleCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async appleCallback(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       if (!oauth2Config.apple.clientId) {
         res.status(503).json({
           success: false,
-          message: 'Apple OAuth2 is not configured',
+          message: "Apple OAuth2 is not configured",
         });
         return;
       }
@@ -752,7 +971,7 @@ export class AuthController {
       if (!code) {
         res.status(400).json({
           success: false,
-          message: 'Authorization code is required',
+          message: "Authorization code is required",
         });
         return;
       }
@@ -760,8 +979,8 @@ export class AuthController {
       const appleUserInfo = await getAppleUserInfo(code);
 
       const email = appleUserInfo.email;
-      let firstName = 'User';
-      let lastName = '';
+      let firstName = "User";
+      let lastName = "";
 
       if (userInfoString) {
         try {
@@ -776,7 +995,7 @@ export class AuthController {
       if (!email) {
         res.status(400).json({
           success: false,
-          message: 'Email not provided by Apple',
+          message: "Email not provided by Apple",
         });
         return;
       }
@@ -789,10 +1008,10 @@ export class AuthController {
         user = await prisma.user.create({
           data: {
             email,
-            passwordHash: '',
+            passwordHash: "",
             firstName,
             lastName,
-            dateOfBirth: new Date('1990-01-01'),
+            dateOfBirth: new Date("1990-01-01"),
             userType: UserType.INDIVIDUAL,
           },
         });
@@ -801,7 +1020,7 @@ export class AuthController {
       if (!user.isActive) {
         res.status(403).json({
           success: false,
-          message: 'User account is inactive',
+          message: "User account is inactive",
         });
         return;
       }
@@ -822,12 +1041,14 @@ export class AuthController {
         familyId: user.familyId,
       });
 
-      const redirectUri = req.body.state || process.env.FRONTEND_URL || 'http://localhost:3000';
-      const separator = redirectUri.includes('?') ? '&' : '?';
-      res.redirect(`${redirectUri}${separator}token=${token}&refreshToken=${refreshToken}`);
+      const redirectUri =
+        req.body.state || process.env.FRONTEND_URL || "http://localhost:3000";
+      const separator = redirectUri.includes("?") ? "&" : "?";
+      res.redirect(
+        `${redirectUri}${separator}token=${token}&refreshToken=${refreshToken}`,
+      );
     } catch (error) {
       next(error);
     }
   }
 }
-

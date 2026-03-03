@@ -15,8 +15,14 @@
  *           type: string
  *         height:
  *           type: number
+ *         heightMeasuredAt:
+ *           type: string
+ *           format: date-time
  *         weight:
  *           type: number
+ *         weightMeasuredAt:
+ *           type: string
+ *           format: date-time
  *         allergies:
  *           type: array
  *           items:
@@ -49,8 +55,14 @@
  *           type: string
  *         height:
  *           type: number
+ *         heightMeasuredAt:
+ *           type: string
+ *           format: date-time
  *         weight:
  *           type: number
+ *         weightMeasuredAt:
+ *           type: string
+ *           format: date-time
  *         allergies:
  *           type: array
  *           items:
@@ -73,8 +85,14 @@
  *           type: string
  *         height:
  *           type: number
+ *         heightMeasuredAt:
+ *           type: string
+ *           format: date-time
  *         weight:
  *           type: number
+ *         weightMeasuredAt:
+ *           type: string
+ *           format: date-time
  *         allergies:
  *           type: array
  *           items:

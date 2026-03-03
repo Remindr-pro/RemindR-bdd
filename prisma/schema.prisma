@@ -89,7 +89,9 @@ model HealthProfile {
   userId            String   @unique @map("user_id") @db.Uuid
   bloodType         String?  @map("blood_type") @db.VarChar
   height            Decimal? @db.Decimal
+  heightMeasuredAt  DateTime? @map("height_measured_at") @db.Timestamp(6)
   weight            Decimal? @db.Decimal
+  weightMeasuredAt  DateTime? @map("weight_measured_at") @db.Timestamp(6)
   allergies         String[] @default([])
   chronicConditions String[] @default([]) @map("chronic_conditions")
   medications       String[] @default([])

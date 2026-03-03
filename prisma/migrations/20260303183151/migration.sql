@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "health_profiles" ALTER COLUMN "height" SET DATA TYPE DECIMAL,
+ALTER COLUMN "weight" SET DATA TYPE DECIMAL;

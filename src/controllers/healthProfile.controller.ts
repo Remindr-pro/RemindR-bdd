@@ -121,7 +121,18 @@ export class HealthProfileController {
         return;
       }
 
-      const { userId, bloodType, height, weight, allergies, chronicConditions, medications, preferences } = req.body;
+      const {
+        userId,
+        bloodType,
+        height,
+        heightMeasuredAt,
+        weight,
+        weightMeasuredAt,
+        allergies,
+        chronicConditions,
+        medications,
+        preferences,
+      } = req.body;
 
       // L'utilisateur ne peut créer un profil que pour lui-même ou un membre de sa famille
       if (userId !== req.user.id) {
@@ -143,7 +154,9 @@ export class HealthProfileController {
           userId,
           bloodType,
           height: height ? parseFloat(height) : null,
+          heightMeasuredAt: heightMeasuredAt ? new Date(heightMeasuredAt) : null,
           weight: weight ? parseFloat(weight) : null,
+          weightMeasuredAt: weightMeasuredAt ? new Date(weightMeasuredAt) : null,
           allergies: allergies || [],
           chronicConditions: chronicConditions || [],
           medications: medications || [],
@@ -173,7 +186,17 @@ export class HealthProfileController {
 
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
-      const { bloodType, height, weight, allergies, chronicConditions, medications, preferences } = req.body;
+      const {
+        bloodType,
+        height,
+        heightMeasuredAt,
+        weight,
+        weightMeasuredAt,
+        allergies,
+        chronicConditions,
+        medications,
+        preferences,
+      } = req.body;
 
       const existingProfile = await prisma.healthProfile.findUnique({
         where: { id: idStr },
@@ -202,7 +225,17 @@ export class HealthProfileController {
       const updateData: Prisma.HealthProfileUpdateInput = {};
       if (bloodType !== undefined) updateData.bloodType = bloodType;
       if (height !== undefined) updateData.height = parseFloat(height);
+      if (heightMeasuredAt !== undefined) {
+        updateData.heightMeasuredAt = heightMeasuredAt
+          ? new Date(heightMeasuredAt)
+          : null;
+      }
       if (weight !== undefined) updateData.weight = parseFloat(weight);
+      if (weightMeasuredAt !== undefined) {
+        updateData.weightMeasuredAt = weightMeasuredAt
+          ? new Date(weightMeasuredAt)
+          : null;
+      }
       if (allergies !== undefined) updateData.allergies = allergies;
       if (chronicConditions !== undefined) updateData.chronicConditions = chronicConditions;
       if (medications !== undefined) updateData.medications = medications;

@@ -131,6 +131,9 @@ export class HealthProfileController {
         allergies,
         chronicConditions,
         medications,
+        sportRecurrence,
+        dietType,
+        addictions,
         preferences,
       } = req.body;
 
@@ -149,8 +152,7 @@ export class HealthProfileController {
         }
       }
 
-      const profile = await prisma.healthProfile.create({
-        data: {
+      const createData = {
           userId,
           bloodType,
           height: height ? parseFloat(height) : null,
@@ -160,8 +162,13 @@ export class HealthProfileController {
           allergies: allergies || [],
           chronicConditions: chronicConditions || [],
           medications: medications || [],
+          sportRecurrence: sportRecurrence ?? null,
+          dietType: dietType ?? null,
+          addictions: addictions || [],
           preferences: preferences || {},
-        },
+        } as Prisma.HealthProfileUncheckedCreateInput;
+      const profile = await prisma.healthProfile.create({
+        data: createData,
       });
 
       res.status(201).json({
@@ -195,6 +202,9 @@ export class HealthProfileController {
         allergies,
         chronicConditions,
         medications,
+        sportRecurrence,
+        dietType,
+        addictions,
         preferences,
       } = req.body;
 
@@ -222,7 +232,11 @@ export class HealthProfileController {
         return;
       }
 
-      const updateData: Prisma.HealthProfileUpdateInput = {};
+      const updateData: Prisma.HealthProfileUncheckedUpdateInput & {
+        sportRecurrence?: string | null;
+        dietType?: string | null;
+        addictions?: string[];
+      } = {};
       if (bloodType !== undefined) updateData.bloodType = bloodType;
       if (height !== undefined) updateData.height = parseFloat(height);
       if (heightMeasuredAt !== undefined) {
@@ -239,11 +253,14 @@ export class HealthProfileController {
       if (allergies !== undefined) updateData.allergies = allergies;
       if (chronicConditions !== undefined) updateData.chronicConditions = chronicConditions;
       if (medications !== undefined) updateData.medications = medications;
+      if (sportRecurrence !== undefined) updateData.sportRecurrence = sportRecurrence;
+      if (dietType !== undefined) updateData.dietType = dietType;
+      if (addictions !== undefined) updateData.addictions = addictions;
       if (preferences !== undefined) updateData.preferences = preferences;
 
       const profile = await prisma.healthProfile.update({
         where: { id: idStr },
-        data: updateData,
+        data: updateData as Prisma.HealthProfileUncheckedUpdateInput,
       });
 
       res.json({

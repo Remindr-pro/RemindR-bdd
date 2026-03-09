@@ -1,147 +1,229 @@
-import dotenv from 'dotenv';
-import path from 'path';
+import crypto from "crypto";
+import dotenv from "dotenv";
+import path from "path";
 
-dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
 
-import { PrismaClient, UserType } from '@prisma/client';
-import { hashPassword } from '../src/utils/bcrypt';
+import { PrismaClient, UserType } from "@prisma/client";
+import { hashPassword } from "../src/utils/bcrypt";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database...');
+  console.log("🌱 Seeding database...");
 
   const insuranceCompany = await prisma.insuranceCompany.create({
     data: {
-      name: 'Health Insurance Co.',
-      contactEmail: 'contact@healthinsurance.com',
-      phoneNumber: '+1234567890',
-      address: '123 Health St, City, Country',
+      name: "Health Insurance Co.",
+      contactEmail: "contact@healthinsurance.com",
+      phoneNumber: "+1234567890",
+      address: "123 Health St, City, Country",
     },
   });
 
-  const family = await prisma.family.create({
+  // Chaque profil a sa propre famille (ou aucune) - pas de lien entre eux
+  const familyUser = await prisma.family.create({
     data: {
       insuranceCompanyId: insuranceCompany.id,
-      familyName: 'Doe Family',
-      primaryContactEmail: 'doe@example.com',
-      subscriptionStatus: 'active',
+      familyName: "Doe Family",
+      primaryContactEmail: "user@remind-r.com",
+      subscriptionStatus: "active",
     },
   });
 
-  const adminPassword = await hashPassword('admin123');
+  const familyMarie = await prisma.family.create({
+    data: {
+      insuranceCompanyId: insuranceCompany.id,
+      familyName: "Doe Marie",
+      primaryContactEmail: "marie@remind-r.com",
+      subscriptionStatus: "active",
+    },
+  });
+
+  const familyCamille = await prisma.family.create({
+    data: {
+      insuranceCompanyId: insuranceCompany.id,
+      familyName: "Famille Dupont",
+      primaryContactEmail: "camille.dupont@mail.com",
+      subscriptionStatus: "active",
+    },
+  });
+
+  const adminPassword = await hashPassword("admin123");
   await prisma.user.upsert({
-    where: { email: 'admin@remind-r.com' },
+    where: { email: "admin@remind-r.com" },
     update: {
       userType: UserType.ADMIN,
-      role: 'admin',
+      role: "admin",
+      familyId: null,
     },
     create: {
-      email: 'admin@remind-r.com',
+      email: "admin@remind-r.com",
       passwordHash: adminPassword,
-      firstName: 'Admin',
-      lastName: 'User',
-      dateOfBirth: new Date('1990-01-01'),
-      role: 'admin',
+      firstName: "Admin",
+      lastName: "User",
+      dateOfBirth: new Date("1990-01-01"),
+      role: "admin",
       userType: UserType.ADMIN,
-      familyId: family.id,
+      familyId: null,
     },
   });
 
-  const userPassword = await hashPassword('user123');
+  const userPassword = await hashPassword("user123");
   const user = await prisma.user.upsert({
-    where: { email: 'user@remind-r.com' },
+    where: { email: "user@remind-r.com" },
     update: {
       userType: UserType.INDIVIDUAL,
+      familyId: familyUser.id,
     },
     create: {
-      email: 'user@remind-r.com',
+      email: "user@remind-r.com",
       passwordHash: userPassword,
-      firstName: 'John',
-      lastName: 'Doe',
-      phoneNumber: '+1234567891',
-      dateOfBirth: new Date('1995-05-15'),
-      genderBirth: 'male',
-      genderActual: 'male',
-      role: 'family_member',
+      firstName: "John",
+      lastName: "Doe",
+      phoneNumber: "+1234567891",
+      dateOfBirth: new Date("1995-05-15"),
+      genderBirth: "male",
+      genderActual: "male",
+      role: "family_member",
       userType: UserType.INDIVIDUAL,
-      familyId: family.id,
+      familyId: familyUser.id,
     },
   });
 
-  const professionalPassword = await hashPassword('pro123');
+  const professionalPassword = await hashPassword("pro123");
   await prisma.user.upsert({
-    where: { email: 'professional@remind-r.com' },
+    where: { email: "professional@remind-r.com" },
     update: { userType: UserType.PROFESSIONAL },
     create: {
-      email: 'professional@remind-r.com',
+      email: "professional@remind-r.com",
       passwordHash: professionalPassword,
-      firstName: 'Dr. Jane',
-      lastName: 'Smith',
-      phoneNumber: '+1234567892',
-      dateOfBirth: new Date('1985-03-20'),
-      genderBirth: 'female',
-      genderActual: 'female',
-      role: 'professional',
+      firstName: "Dr. Jane",
+      lastName: "Smith",
+      phoneNumber: "+1234567892",
+      dateOfBirth: new Date("1985-03-20"),
+      genderBirth: "female",
+      genderActual: "female",
+      role: "professional",
       userType: UserType.PROFESSIONAL,
       familyId: null,
     },
   });
 
-  const mariePassword = await hashPassword('marie123');
+  const mariePassword = await hashPassword("marie123");
   const marie = await prisma.user.upsert({
-    where: { email: 'marie@remind-r.com' },
-    update: { userType: UserType.INDIVIDUAL },
-    create: {
-      email: 'marie@remind-r.com',
-      passwordHash: mariePassword,
-      firstName: 'Marie',
-      lastName: 'Doe',
-      phoneNumber: '+1234567893',
-      dateOfBirth: new Date('1998-08-10'),
-      genderBirth: 'female',
-      genderActual: 'female',
-      role: 'family_member',
+    where: { email: "marie@remind-r.com" },
+    update: {
       userType: UserType.INDIVIDUAL,
-      familyId: family.id,
+      familyId: familyMarie.id,
+    },
+    create: {
+      email: "marie@remind-r.com",
+      passwordHash: mariePassword,
+      firstName: "Marie",
+      lastName: "Doe",
+      phoneNumber: "+1234567893",
+      dateOfBirth: new Date("1998-08-10"),
+      genderBirth: "female",
+      genderActual: "female",
+      role: "family_member",
+      userType: UserType.INDIVIDUAL,
+      familyId: familyMarie.id,
     },
   });
 
-  const standalonePassword = await hashPassword('standalone123');
+  const standalonePassword = await hashPassword("standalone123");
   await prisma.user.upsert({
-    where: { email: 'standalone@remind-r.com' },
+    where: { email: "standalone@remind-r.com" },
     update: { userType: UserType.INDIVIDUAL },
     create: {
-      email: 'standalone@remind-r.com',
+      email: "standalone@remind-r.com",
       passwordHash: standalonePassword,
-      firstName: 'Alex',
-      lastName: 'Martin',
-      phoneNumber: '+1234567894',
-      dateOfBirth: new Date('1992-11-05'),
-      genderBirth: 'male',
-      genderActual: 'male',
-      role: 'family_member',
+      firstName: "Alex",
+      lastName: "Martin",
+      phoneNumber: "+1234567894",
+      dateOfBirth: new Date("1992-11-05"),
+      genderBirth: "male",
+      genderActual: "male",
+      role: "family_member",
       userType: UserType.INDIVIDUAL,
       familyId: null,
     },
   });
 
-  const camillePassword = await hashPassword('camille123');
+  const camillePassword = await hashPassword("camille123");
   const camille = await prisma.user.upsert({
-    where: { email: 'camille.dupont@mail.com' },
-    update: { userType: UserType.INDIVIDUAL },
-    create: {
-      email: 'camille.dupont@mail.com',
-      passwordHash: camillePassword,
-      firstName: 'Camille',
-      lastName: 'Dupont',
-      phoneNumber: '+33612345678',
-      dateOfBirth: new Date('1990-06-22'),
-      genderBirth: 'female',
-      genderActual: 'female',
-      role: 'family_member',
+    where: { email: "camille.dupont@mail.com" },
+    update: {
       userType: UserType.INDIVIDUAL,
-      familyId: family.id,
+      familyId: familyCamille.id,
+    },
+    create: {
+      email: "camille.dupont@mail.com",
+      passwordHash: camillePassword,
+      firstName: "Camille",
+      lastName: "Dupont",
+      phoneNumber: "+33612345678",
+      dateOfBirth: new Date("1990-06-22"),
+      genderBirth: "female",
+      genderActual: "female",
+      role: "family_member",
+      userType: UserType.INDIVIDUAL,
+      familyId: familyCamille.id,
+    },
+  });
+
+  // Membres simples (non-user) pour Camille : Alice et Milo Dupont
+  const simpleMemberPassword = await hashPassword(crypto.randomBytes(24).toString("hex"));
+  await prisma.user.upsert({
+    where: { email: "family-member-alice-dupont@remindr.local" },
+    update: {
+      familyId: familyCamille.id,
+      firstName: "Alice",
+      lastName: "Dupont",
+      dateOfBirth: new Date("2018-11-06"),
+      genderBirth: "female",
+      genderActual: "female",
+      profileLink: "enfant",
+    },
+    create: {
+      email: "family-member-alice-dupont@remindr.local",
+      passwordHash: simpleMemberPassword,
+      firstName: "Alice",
+      lastName: "Dupont",
+      dateOfBirth: new Date("2018-11-06"),
+      genderBirth: "female",
+      genderActual: "female",
+      profileLink: "enfant",
+      role: "family_member",
+      userType: UserType.INDIVIDUAL,
+      familyId: familyCamille.id,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "family-member-milo-dupont@remindr.local" },
+    update: {
+      familyId: familyCamille.id,
+      firstName: "Milo",
+      lastName: "Dupont",
+      dateOfBirth: new Date("2022-05-02"),
+      genderBirth: "male",
+      genderActual: "male",
+      profileLink: "enfant",
+    },
+    create: {
+      email: "family-member-milo-dupont@remindr.local",
+      passwordHash: simpleMemberPassword,
+      firstName: "Milo",
+      lastName: "Dupont",
+      dateOfBirth: new Date("2022-05-02"),
+      genderBirth: "male",
+      genderActual: "male",
+      profileLink: "enfant",
+      role: "family_member",
+      userType: UserType.INDIVIDUAL,
+      familyId: familyCamille.id,
     },
   });
 
@@ -150,15 +232,15 @@ async function main() {
     update: {},
     create: {
       userId: user.id,
-      bloodType: 'O+',
+      bloodType: "O+",
       height: 175.5,
       weight: 70.0,
-      allergies: ['Peanuts', 'Dust'],
+      allergies: ["Peanuts", "Dust"],
       chronicConditions: [],
-      medications: ['Vitamin D'],
+      medications: ["Vitamin D"],
       preferences: {
-        language: 'en',
-        units: 'metric',
+        language: "en",
+        units: "metric",
       },
     },
   });
@@ -168,15 +250,15 @@ async function main() {
     update: {},
     create: {
       userId: marie.id,
-      bloodType: 'A+',
+      bloodType: "A+",
       height: 165.0,
       weight: 58.0,
-      allergies: ['Pollen'],
+      allergies: ["Pollen"],
       chronicConditions: [],
       medications: [],
       preferences: {
-        language: 'fr',
-        units: 'metric',
+        language: "fr",
+        units: "metric",
       },
     },
   });
@@ -186,32 +268,32 @@ async function main() {
     update: {},
     create: {
       userId: camille.id,
-      bloodType: 'B+',
+      bloodType: "B+",
       height: 168.0,
       weight: 62.0,
       allergies: [],
       chronicConditions: [],
-      medications: ['Magnésium'],
+      medications: ["Magnésium"],
       preferences: {
-        language: 'fr',
-        units: 'metric',
+        language: "fr",
+        units: "metric",
       },
     },
   });
 
   const medicationType = await prisma.reminderType.create({
     data: {
-      name: 'Medication',
-      category: 'health',
-      description: 'Reminder to take medication',
+      name: "Medication",
+      category: "health",
+      description: "Reminder to take medication",
     },
   });
 
   await prisma.reminderType.create({
     data: {
-      name: 'Appointment',
-      category: 'health',
-      description: 'Medical appointment reminder',
+      name: "Appointment",
+      category: "health",
+      description: "Medical appointment reminder",
     },
   });
 
@@ -219,11 +301,11 @@ async function main() {
     data: {
       userId: user.id,
       typeId: medicationType.id,
-      title: 'Take Vitamin D',
-      description: 'Take your daily vitamin D supplement',
-      scheduledTime: new Date('1970-01-01T09:00:00'),
+      title: "Take Vitamin D",
+      description: "Take your daily vitamin D supplement",
+      scheduledTime: new Date("1970-01-01T09:00:00"),
       recurrence: {
-        frequency: 'daily',
+        frequency: "daily",
       },
       isActive: true,
       startDate: new Date(),
@@ -234,10 +316,10 @@ async function main() {
     data: {
       userId: marie.id,
       typeId: medicationType.id,
-      title: 'Rendez-vous médecin',
-      description: 'Contrôle annuel',
-      scheduledTime: new Date('1970-01-01T14:00:00'),
-      recurrence: { frequency: 'yearly' },
+      title: "Rendez-vous médecin",
+      description: "Contrôle annuel",
+      scheduledTime: new Date("1970-01-01T14:00:00"),
+      recurrence: { frequency: "yearly" },
       isActive: true,
       startDate: new Date(),
     },
@@ -245,38 +327,38 @@ async function main() {
 
   const healthCategory = await prisma.articleCategory.create({
     data: {
-      name: 'General Health',
-      description: 'Articles about general health and wellness',
+      name: "General Health",
+      description: "Articles about general health and wellness",
       targetAgeMin: 0,
       targetAgeMax: 100,
-      tags: ['health', 'wellness'],
+      tags: ["health", "wellness"],
     },
   });
-  
+
   await prisma.article.create({
     data: {
       categoryId: healthCategory.id,
-      title: '10 Tips for Better Sleep',
-      content: 'Getting enough quality sleep is essential for your health...',
-      excerpt: 'Discover 10 simple tips to improve your sleep quality.',
+      title: "10 Tips for Better Sleep",
+      content: "Getting enough quality sleep is essential for your health...",
+      excerpt: "Discover 10 simple tips to improve your sleep quality.",
       readingTimeMinutes: 5,
-      author: 'Dr. Jane Smith',
+      author: "Dr. Jane Smith",
       isPublished: true,
       publishedAt: new Date(),
       targetAudience: {
         ageRange: [18, 65],
-        interests: ['health', 'wellness'],
+        interests: ["health", "wellness"],
       },
-      seoKeywords: ['sleep', 'health', 'wellness'],
+      seoKeywords: ["sleep", "health", "wellness"],
     },
   });
 
   await prisma.partner.create({
     data: {
-      name: 'Health Clinic',
-      description: 'A trusted health clinic partner',
-      category: 'healthcare',
-      websiteUrl: 'https://healthclinic.example.com',
+      name: "Health Clinic",
+      description: "A trusted health clinic partner",
+      category: "healthcare",
+      websiteUrl: "https://healthclinic.example.com",
       isActive: true,
       isExtern: true,
     },
@@ -284,10 +366,10 @@ async function main() {
 
   await prisma.partner.create({
     data: {
-      name: 'Mutuelle Harmonie',
-      description: 'Mutuelle partenaire RemindR - Prenez soin de votre santé',
-      category: 'mutuelle',
-      websiteUrl: 'https://remind-r.com/partenaires/harmonie',
+      name: "Mutuelle Harmonie",
+      description: "Mutuelle partenaire RemindR - Prenez soin de votre santé",
+      category: "mutuelle",
+      websiteUrl: "https://remind-r.com/partenaires/harmonie",
       isActive: true,
       isExtern: false,
     },
@@ -301,13 +383,13 @@ async function main() {
       step: 5,
       nbPersonsFollowed: 1,
       hasGeneralPractitioner: true,
-      generalPractitionerName: 'Dr. Smith',
-      physicalActivityFrequency: '3-4 times per week',
-      dietType: 'balanced',
+      generalPractitionerName: "Dr. Smith",
+      physicalActivityFrequency: "3-4 times per week",
+      dietType: "balanced",
       usesAlternativeMedicine: false,
-      enabledReminderTypes: ['medication', 'appointment'],
-      reminderFrequency: 'daily',
-      enabledNotificationChannels: ['push', 'email'],
+      enabledReminderTypes: ["medication", "appointment"],
+      reminderFrequency: "daily",
+      enabledNotificationChannels: ["push", "email"],
     },
   });
 
@@ -319,50 +401,50 @@ async function main() {
       step: 4,
       nbPersonsFollowed: 2,
       hasGeneralPractitioner: true,
-      generalPractitionerName: 'Dr. Dupont',
-      physicalActivityFrequency: '1-2 times per week',
-      dietType: 'vegetarian',
+      generalPractitionerName: "Dr. Dupont",
+      physicalActivityFrequency: "1-2 times per week",
+      dietType: "vegetarian",
       usesAlternativeMedicine: true,
-      enabledReminderTypes: ['medication'],
-      reminderFrequency: 'weekly',
-      enabledNotificationChannels: ['push'],
+      enabledReminderTypes: ["medication"],
+      reminderFrequency: "weekly",
+      enabledNotificationChannels: ["push"],
     },
   });
 
   await prisma.questionnary.upsert({
     where: { userId: camille.id },
-    update: {},
+    update: { nbPersonsFollowed: 3 },
     create: {
       userId: camille.id,
       step: 5,
-      nbPersonsFollowed: 1,
+      nbPersonsFollowed: 3,
       hasGeneralPractitioner: true,
-      generalPractitionerName: 'Dr. Martin',
-      physicalActivityFrequency: '3-4 times per week',
-      dietType: 'balanced',
+      generalPractitionerName: "Dr. Martin",
+      physicalActivityFrequency: "3-4 times per week",
+      dietType: "balanced",
       usesAlternativeMedicine: false,
-      enabledReminderTypes: ['medication', 'appointment'],
-      reminderFrequency: 'daily',
-      enabledNotificationChannels: ['push', 'email'],
+      enabledReminderTypes: ["medication", "appointment"],
+      reminderFrequency: "daily",
+      enabledNotificationChannels: ["push", "email"],
     },
   });
 
-  console.log('✅ Seeding completed!');
-  console.log('📧 Utilisateurs créés :');
-  console.log('   Admin:       admin@remind-r.com / admin123');
-  console.log('   User:        user@remind-r.com / user123');
-  console.log('   Pro:         professional@remind-r.com / pro123');
-  console.log('   Marie:       marie@remind-r.com / marie123');
-  console.log('   Standalone:  standalone@remind-r.com / standalone123');
-  console.log('   Camille:     camille.dupont@mail.com / camille123');
+  console.log("✅ Seeding completed!");
+  console.log("📧 Utilisateurs créés (non liés entre eux) :");
+  console.log("   Admin:       admin@remind-r.com / admin123");
+  console.log("   User:        user@remind-r.com / user123");
+  console.log("   Pro:         professional@remind-r.com / pro123");
+  console.log("   Marie:       marie@remind-r.com / marie123");
+  console.log("   Standalone:  standalone@remind-r.com / standalone123");
+  console.log("   Camille:     camille.dupont@mail.com / camille123");
+  console.log("   → Camille a 2 membres simples : Alice Dupont (06/11/2018), Milo Dupont (02/05/2022)");
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seeding error:', e);
+    console.error("❌ Seeding error:", e);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
   });
-

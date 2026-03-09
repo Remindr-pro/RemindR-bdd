@@ -95,6 +95,9 @@ model HealthProfile {
   allergies         String[] @default([])
   chronicConditions String[] @default([]) @map("chronic_conditions")
   medications       String[] @default([])
+  sportRecurrence   String?  @map("sport_recurrence") @db.VarChar
+  dietType          String?  @map("diet_type") @db.VarChar
+  addictions        String[] @default([])
   preferences       Json?
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamp(6)

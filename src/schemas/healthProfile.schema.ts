@@ -11,6 +11,9 @@ export const createHealthProfileSchema = z.object({
     allergies: z.array(z.string()).optional(),
     chronicConditions: z.array(z.string()).optional(),
     medications: z.array(z.string()).optional(),
+    sportRecurrence: z.string().optional(),
+    dietType: z.string().optional(),
+    addictions: z.array(z.string()).optional(),
     preferences: z.record(z.string(), z.any()).optional(),
   }),
 });
@@ -28,6 +31,9 @@ export const updateHealthProfileSchema = z.object({
     allergies: z.array(z.string()).optional(),
     chronicConditions: z.array(z.string()).optional(),
     medications: z.array(z.string()).optional(),
+    sportRecurrence: z.string().optional().nullable(),
+    dietType: z.string().optional().nullable(),
+    addictions: z.array(z.string()).optional(),
     preferences: z.record(z.string(), z.any()).optional(),
   }),
 });

@@ -1,15 +1,19 @@
-import { Request, Response, NextFunction } from 'express';
-import prisma from '../config/database';
-import { AuthRequest } from '../middleware/auth';
-import { Prisma } from '@prisma/client';
+import { Request, Response, NextFunction } from "express";
+import prisma from "../config/database";
+import { AuthRequest } from "../middleware/auth";
+import { Prisma } from "@prisma/client";
 
 export class ReminderController {
-  async getCalendar(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async getCalendar(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       if (!req.user) {
         res.status(401).json({
           success: false,
-          message: 'Unauthorized',
+          message: "Unauthorized",
         });
         return;
       }
@@ -20,7 +24,7 @@ export class ReminderController {
       if (!start || !end) {
         res.status(400).json({
           success: false,
-          message: 'Query parameters start and end (ISO date) are required',
+          message: "Query parameters start and end (ISO date) are required",
         });
         return;
       }
@@ -31,16 +35,18 @@ export class ReminderController {
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
         res.status(400).json({
           success: false,
-          message: 'Invalid date format for start or end',
+          message: "Invalid date format for start or end",
         });
         return;
       }
 
       const userIds = req.user.familyId
-        ? (await prisma.user.findMany({
-            where: { familyId: req.user.familyId },
-            select: { id: true },
-          })).map((u) => u.id)
+        ? (
+            await prisma.user.findMany({
+              where: { familyId: req.user.familyId },
+              select: { id: true },
+            })
+          ).map((u) => u.id)
         : [req.user.id];
 
       const reminders = await prisma.reminder.findMany({
@@ -62,7 +68,7 @@ export class ReminderController {
             },
           },
         },
-        orderBy: { scheduledTime: 'asc' },
+        orderBy: { scheduledTime: "asc" },
       });
 
       res.json({
@@ -74,12 +80,16 @@ export class ReminderController {
     }
   }
 
-  async getAll(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async getAll(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       if (!req.user) {
         res.status(401).json({
           success: false,
-          message: 'Unauthorized',
+          message: "Unauthorized",
         });
         return;
       }
@@ -89,7 +99,7 @@ export class ReminderController {
         include: {
           type: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       });
 
       res.json({
@@ -101,7 +111,11 @@ export class ReminderController {
     }
   }
 
-  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getById(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
@@ -124,7 +138,7 @@ export class ReminderController {
       if (!reminder) {
         res.status(404).json({
           success: false,
-          message: 'Reminder not found',
+          message: "Reminder not found",
         });
         return;
       }
@@ -138,21 +152,54 @@ export class ReminderController {
     }
   }
 
-  async create(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async create(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       if (!req.user) {
         res.status(401).json({
           success: false,
-          message: 'Unauthorized',
+          message: "Unauthorized",
         });
         return;
       }
 
-      const { typeId, title, description, scheduledTime, recurrence, startDate, endDate } = req.body;
+      const {
+        userId: bodyUserId,
+        typeId,
+        title,
+        description,
+        scheduledTime,
+        recurrence,
+        startDate,
+        endDate,
+      } = req.body;
+
+      let targetUserId = req.user.id;
+      if (bodyUserId) {
+        const familyUserIds = req.user.familyId
+          ? (
+              await prisma.user.findMany({
+                where: { familyId: req.user.familyId },
+                select: { id: true },
+              })
+            ).map((u) => u.id)
+          : [req.user.id];
+        if (!familyUserIds.includes(bodyUserId)) {
+          res.status(403).json({
+            success: false,
+            message: "Cannot create reminder for a user outside your family",
+          });
+          return;
+        }
+        targetUserId = bodyUserId;
+      }
 
       const reminder = await prisma.reminder.create({
         data: {
-          userId: req.user.id,
+          userId: targetUserId,
           typeId,
           title,
           description,
@@ -168,7 +215,7 @@ export class ReminderController {
 
       res.status(201).json({
         success: true,
-        message: 'Reminder created successfully',
+        message: "Reminder created successfully",
         data: reminder,
       });
     } catch (error) {
@@ -180,17 +227,27 @@ export class ReminderController {
     try {
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
-      const { typeId, title, description, scheduledTime, recurrence, startDate, endDate, isActive } = req.body;
+      const {
+        typeId,
+        title,
+        description,
+        scheduledTime,
+        recurrence,
+        startDate,
+        endDate,
+        isActive,
+      } = req.body;
 
       const updateData: Prisma.ReminderUpdateInput = {};
       if (typeId) {
         updateData.type = {
-          connect: { id: typeof typeId === 'string' ? typeId : String(typeId) },
+          connect: { id: typeof typeId === "string" ? typeId : String(typeId) },
         };
       }
       if (title) updateData.title = title;
       if (description !== undefined) updateData.description = description;
-      if (scheduledTime) updateData.scheduledTime = new Date(`1970-01-01T${scheduledTime}`);
+      if (scheduledTime)
+        updateData.scheduledTime = new Date(`1970-01-01T${scheduledTime}`);
       if (recurrence !== undefined) updateData.recurrence = recurrence;
       if (startDate) updateData.startDate = new Date(startDate);
       if (endDate) updateData.endDate = new Date(endDate);
@@ -206,7 +263,7 @@ export class ReminderController {
 
       res.json({
         success: true,
-        message: 'Reminder updated successfully',
+        message: "Reminder updated successfully",
         data: reminder,
       });
     } catch (error) {
@@ -225,14 +282,18 @@ export class ReminderController {
 
       res.json({
         success: true,
-        message: 'Reminder deleted successfully',
+        message: "Reminder deleted successfully",
       });
     } catch (error) {
       next(error);
     }
   }
 
-  async toggleActive(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async toggleActive(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
@@ -244,7 +305,7 @@ export class ReminderController {
       if (!reminder) {
         res.status(404).json({
           success: false,
-          message: 'Reminder not found',
+          message: "Reminder not found",
         });
         return;
       }
@@ -256,7 +317,7 @@ export class ReminderController {
 
       res.json({
         success: true,
-        message: `Reminder ${updated.isActive ? 'activated' : 'deactivated'}`,
+        message: `Reminder ${updated.isActive ? "activated" : "deactivated"}`,
         data: updated,
       });
     } catch (error) {
@@ -264,4 +325,3 @@ export class ReminderController {
     }
   }
 }
-

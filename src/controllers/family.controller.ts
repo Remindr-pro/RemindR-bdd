@@ -330,7 +330,14 @@ export class FamilyController {
         ...(profilePictureUrl !== undefined
           ? { profilePictureUrl: profilePictureUrl || null }
           : {}),
-        ...(profileLink !== undefined ? { profileLink: profileLink || null } : {}),
+        ...(profileLink !== undefined
+          ? {
+              profileLink:
+                typeof profileLink === "string" && profileLink.trim()
+                  ? profileLink.trim().toLowerCase()
+                  : null,
+            }
+          : {}),
         ...(profileColor !== undefined ? { profileColor: profileColor || null } : {}),
       };
 

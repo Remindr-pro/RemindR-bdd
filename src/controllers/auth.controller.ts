@@ -831,7 +831,10 @@ export class AuthController {
       if (profilePictureUrl !== undefined)
         updateData.profilePictureUrl = profilePictureUrl || null;
       if (profileLink !== undefined)
-        updateData.profileLink = profileLink || null;
+        updateData.profileLink =
+          typeof profileLink === "string" && profileLink.trim()
+            ? profileLink.trim().toLowerCase()
+            : null;
       if (profileColor !== undefined)
         updateData.profileColor = profileColor || null;
       if (profileCompleted !== undefined)
